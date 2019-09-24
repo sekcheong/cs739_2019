@@ -17,7 +17,7 @@ LDFLAGS= -lm -pthread -ldl
 
 COMMON= -Iinclude/ -Isrc/
 
-CFLAGS=-Wall -Wno-unused-result -Wno-unknown-pragmas -Wfatal-errors -fPIC
+CFLAGS=-Wall -Wno-unused-result -Wno-unknown-pragmas -Wfatal-errors -fPIC `pkg-config --cflags python3` 
 
 ifeq ($(DEBUG), 1) 
 	OPTS=-O0 -g
@@ -26,6 +26,11 @@ endif
 #for MacOS clang we need to add libc++
 ifeq ($(UNAME),Darwin)
 	CPP += -stdlib=libc++ 
+endif
+
+SONAME = -soname
+ifeq ($(UNAME),Darwin)
+	SONAME = -install_name
 endif
 
 CFLAGS+=$(OPTS)
@@ -39,6 +44,7 @@ OBJ=sqlite3.o \
 	server.o \
 	client.o \
 	lib739kv.o \
+	lib739kvpy.o \
 
 #list of executable to build  
 EXEC = test test_server test_client kvdaemon kvservice
@@ -66,6 +72,9 @@ $(OBJDIR)%.o: %.c $(DEPS)
 	
 $(EXEC): $(EXECOBJ) $(SLIB)
 	$(CPP) $(COMMON) $(CFLAGS) $(OBJDIR)$@.o -o $@ $(LDFLAGS) $(SLIB)
+
+python:	$(OBJS)
+	$(CPP) -shared -Wl,$(SONAME),lib739kvpy.so -o lib739kvpy.so $(LDFLAGS) $(SLIB)
 
 obj:
 	mkdir -p obj
