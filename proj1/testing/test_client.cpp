@@ -3,9 +3,21 @@
 
 #include "client.h"
 
-int main() {
-	std::string host = "localhost";
-	client c(host, 52123);
+int main(int argc, char *argv[]) {
+	
+	if (argc<3) {
+		std::cout << "Usage: " << std::endl;
+		std::cout << "  test_client [host] [port]" << std::endl;
+		return -1;
+	}
+
+	std::string host(argv[1]);
+	int port = atoi(argv[2]);
+
+	client c(host, port);
+
+	std::cout << "Host: " << host << std::endl;
+	std::cout <<" Port: " << port << std::endl;
 
 	std::cout << "Enter key,value pair, enter 'q' for key to shutdown the server." << std::endl;
 
@@ -33,9 +45,6 @@ int main() {
 
 		message res;
 		c.send_message(msg, res);
+
 	}
-
-	// message msg(command::SHUT_DOWN);
-	// c.send_message(msg, msg);
-
 }
