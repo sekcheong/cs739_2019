@@ -7,7 +7,7 @@
 #include "datastore.h"
 #include "sqlstatement.h"
 
-int64_t get_timestamp() {
+int64_t os_timestamp() {
 	return std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
 }
 
@@ -89,6 +89,27 @@ bool data_store::get(const char *key, const char *value, int *len, int64_t *time
 }
 
 
+int64_t data_store::get_timestamp(const char *key) {
+	if (!validate_key(key)) {
+		throw exception("sdata_store::get(): Invalid key", -1);
+	}
+
+	sql_statement stmt(db_);
+	const char* sql = "SELECT timestamp from data_store WHERE key = ?";
+
+	stmt.prepare(sql);
+	
+	stmt.bind_text(1, key);
+
+	if (stmt.read()) {
+		return stmt.read_int64(0);
+	}
+	else {
+		return -1;
+	}
+}
+
+
 bool data_store::put(const char *key, const char *value, int len, const char *ov, int *ov_len, int64_t *timestamp) {	
 
 	if (!validate_key(key)) {
@@ -106,18 +127,18 @@ bool data_store::put(const char *key, const char *value, int len, const char *ov
 		const char *sql = "UPDATE data_store SET value = ?, timestamp = ? WHERE key = ?";
 		stmt.prepare(sql);
 		stmt.bind_blob(1, value, len);
-		ts = get_timestamp();
+		ts = os_timestamp();
 		stmt.bind_int64(2, ts);
 		stmt.bind_text(3, key);
 		stmt.execute();
 	}
 	else {
-		ts = get_timestamp();
+		ts = os_timestamp();
 		const char *sql = "INSERT INTO data_store VALUES(?, ?, ?)";
 		stmt.prepare(sql);
 		stmt.bind_text(1, key);
 		stmt.bind_blob(2, value, len);
-		ts = get_timestamp();
+		ts = os_timestamp();
 		stmt.bind_int64(3, ts);
 		stmt.execute();
 		*ov_len = -1;
@@ -161,7 +182,7 @@ bool data_store::validate_key(const char *key) {
 		auto c = key[i];
 		if (!isprint(c)) return false;		
 		if (c=='[' || c==']') return false;			
-	}	
+	}
 	return true;
 }
 

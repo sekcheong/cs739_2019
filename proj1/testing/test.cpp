@@ -100,8 +100,11 @@ void test_kv_store() {
 		std::cerr << ex.what()  << " error_code: " << ex.code() << std::endl;
 	}
 
-	std::cout << "first timestamp: " << ds.get_first_timestamp() << std::endl;
-	std::cout << "last timestamp : " << ds.get_last_timestamp() << std::endl;
+	std::cout << "first timestamp : " << ds.get_first_timestamp() << std::endl;
+	std::cout << "last timestamp  : " << ds.get_last_timestamp() << std::endl;
+	std::cout << "Timestamp 'foo' : " << ds.get_timestamp("foo") << std::endl;
+	std::cout << "Timestamp 'ugh' : " << ds.get_timestamp("ugh") << std::endl;
+
 }
 
 

@@ -12,7 +12,7 @@
 #define MAX_KEY_LEN 128
 #define MAX_VALUE_LEN 2048
 
-int64_t get_timestamp();
+int64_t os_timestamp();
 
 
 class data_store {
@@ -29,6 +29,8 @@ public:
 	
 	//returns the earliest timestamp, returns -1 if no value exist
 	virtual int64_t get_first_timestamp();
+
+	virtual int64_t get_timestamp(const char *key);
 
 	virtual int64_t get_next(const char *key, int *kl, const char *value, int *vl, int64_t timestamp);
 	
