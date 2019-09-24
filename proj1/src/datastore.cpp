@@ -30,12 +30,12 @@ data_store::data_store(const char *filename) {
 		throw exception("Unable to open database: " + filename_, ret);
 	}
 
-	const char *sql = "CREATE TABLE IF NOT EXISTS data_store (key TEXT PRIMARY KEY, value BLOB, timestamp INTEGER);";
- 	
+	const char *sql = "CREATE TABLE IF NOT EXISTS data_store (key TEXT PRIMARY KEY, value BLOB, timestamp INTEGER);"; 	
  	ret = sqlite3_exec(db_, sql, 0, 0, 0);
  	if (ret!=SQLITE_OK) {
  		throw exception("Error creating the date_store table", ret);
  	}
+
 	DEBUG_PRINT("  done");
 	DEBUG_PRINT("data_store::data_store() [end]");
 }
@@ -103,10 +103,10 @@ bool data_store::put(const char *key, const char *value, int len, const char *ov
 
 	int64_t ts;
 	if (get(key, ov, ov_len, timestamp)) {
-		ts = get_timestamp();
 		const char *sql = "UPDATE data_store SET value = ?, timestamp = ? WHERE key = ?";
 		stmt.prepare(sql);
 		stmt.bind_blob(1, value, len);
+		ts = get_timestamp();
 		stmt.bind_int64(2, ts);
 		stmt.bind_text(3, key);
 		stmt.execute();
@@ -117,12 +117,40 @@ bool data_store::put(const char *key, const char *value, int len, const char *ov
 		stmt.prepare(sql);
 		stmt.bind_text(1, key);
 		stmt.bind_blob(2, value, len);
+		ts = get_timestamp();
 		stmt.bind_int64(3, ts);
 		stmt.execute();
 		*ov_len = -1;
 	}
 
 	return true;
+}
+
+
+int64_t data_store::get_last_timestamp() {
+	sql_statement stmt(db_);
+	const char *sql = "select timestamp from data_store order by timestamp desc limit 1";
+	stmt.prepare(sql);
+	if (stmt.read()) {
+		return stmt.read_int64(0);
+	}
+	return -1;
+}
+
+
+int64_t data_store::get_first_timestamp() {
+	sql_statement stmt(db_);
+	const char *sql = "select timestamp from data_store order by timestamp asc limit 1";
+	stmt.prepare(sql);
+	if (stmt.read()) {
+		return stmt.read_int64(0);
+	}
+	return -1;
+}
+
+
+int64_t data_store::get_next(const char *key, int *kl, const char *value, int *vl, int64_t timestamp) {
+	return 0;
 }
 
 

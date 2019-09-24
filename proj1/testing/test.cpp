@@ -35,9 +35,8 @@ void test_kv_store() {
 		const char *key = "foo";
 		const char *nv = "What's up doc?";
 		
-		ds.put("foo", nv, strlen(nv), ov, &ov_len, &ts);
-		std::cout << "key      : " << key << std::endl;
-
+		ds.put(key, nv, strlen(nv), ov, &ov_len, &ts);
+		std::cout << "key      : " << key << std::endl;		
 		//if we have an old value
 		if (ov_len>-1) {
 			ov[ov_len] = 0;
@@ -101,6 +100,8 @@ void test_kv_store() {
 		std::cerr << ex.what()  << " error_code: " << ex.code() << std::endl;
 	}
 
+	std::cout << "first timestamp: " << ds.get_first_timestamp() << std::endl;
+	std::cout << "last timestamp : " << ds.get_last_timestamp() << std::endl;
 }
 
 

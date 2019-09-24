@@ -23,8 +23,17 @@ public:
 
 	virtual bool get(const char *key, const char *value, int *len, int64_t *timestamp);
 	virtual bool put(const char *key, const char *value, int len, const char *ov, int *ov_len, int64_t *timestamp);
+	
+	//returns the latest timestamp, returns -1 if no value exist	
+	virtual int64_t get_last_timestamp();
+	
+	//returns the earliest timestamp, returns -1 if no value exist
+	virtual int64_t get_first_timestamp();
 
+	virtual int64_t get_next(const char *key, int *kl, const char *value, int *vl, int64_t timestamp);
+	
 	virtual bool validate_key(const char* key);
+	
 	virtual bool validate_value(const char *value, int len);
 
 	virtual bool get(const char *key, const char *value, int *len) {
