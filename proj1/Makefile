@@ -5,7 +5,9 @@ DEBUG=0
 SLIB=lib739kv.so
 
 VPATH=./src/:./testing
+
 OBJDIR=./obj/
+
 
 CC=gcc 
 
@@ -23,31 +25,37 @@ ifeq ($(DEBUG), 1)
 	OPTS=-O0 -g
 endif
 
+
+SONAME = -soname
+
 #for MacOS clang we need to add libc++
 ifeq ($(UNAME),Darwin)
 	CPP += -stdlib=libc++ 
-endif
-
-SONAME = -soname
-ifeq ($(UNAME),Darwin)
 	SONAME = -install_name
 endif
 
+
 CFLAGS+=$(OPTS)
 
+
 #list of objects to build
-OBJ=sqlite3.o \
-    debug.o \
-	sqlstatement.o \
-	datastore.o \
-	message.o \
-	server.o \
-	client.o \
-	lib739kv.o \
-	lib739kvpy.o \
+OBJ=	sqlite3.o \
+	    debug.o \
+		sqlstatement.o \
+		datastore.o \
+		message.o \
+		server.o \
+		client.o \
+		lib739kv.o \
+
 
 #list of executable to build  
-EXEC = test test_server test_client kvdaemon kvservice
+EXEC =  kvdaemon \
+		kvservice \
+		test \
+		server_test \
+		client_test \
+
 
 EXECOBJA = $(addprefix $(OBJDIR), $(EXEC))
 
@@ -57,7 +65,7 @@ OBJS = $(addprefix $(OBJDIR), $(OBJ))
 
 DEPS = $(wildcard src/*.h) Makefile include/lib739kv.h
 
-TESTFILES = test.db
+TESTFILES = test*.db
 
 all: obj $(SLIB) $(EXECOBJ) $(EXEC)
 
@@ -73,7 +81,7 @@ $(OBJDIR)%.o: %.c $(DEPS)
 $(EXEC): $(EXECOBJ) $(SLIB)
 	$(CPP) $(COMMON) $(CFLAGS) $(OBJDIR)$@.o -o $@ $(LDFLAGS) $(SLIB)
 
-python:	$(OBJS)
+python:	$(OBJS) lib739kvpy.o
 	$(CPP) -shared -Wl,$(SONAME),lib739kvpy.so -o lib739kvpy.so $(LDFLAGS) $(SLIB)
 
 obj:
@@ -82,4 +90,4 @@ obj:
 .PHONY: clean
 
 clean:
-	rm -rf $(OBJS) $(SLIB) $(EXEC) $(EXECOBJ) $(OBJDIR) $(EXEC) $(TESTFILES)
+	rm -rf $(OBJS) $(SLIB) $(EXEC) $(EXECOBJ) $(OBJDIR) $(TESTFILES)

@@ -39,7 +39,7 @@
 
 # test
 test
-test_client
-test_server
+*_test
+*_test
 kvdaemon
 kvservice
