@@ -47,7 +47,7 @@ OBJ=	sqlite3.o \
 		server.o \
 		client.o \
 		lib739kv.o \
-
+		lib739kvpy.o \
 
 #list of executable to build  
 EXEC =  kvdaemon \
@@ -81,7 +81,7 @@ $(OBJDIR)%.o: %.c $(DEPS)
 $(EXEC): $(EXECOBJ) $(SLIB)
 	$(CPP) $(COMMON) $(CFLAGS) $(OBJDIR)$@.o -o $@ $(LDFLAGS) $(SLIB)
 
-python:	$(OBJS) lib739kvpy.o
+python:	$(OBJS) 
 	$(CPP) -shared -Wl,$(SONAME),lib739kvpy.so -o lib739kvpy.so $(LDFLAGS) $(SLIB)
 
 obj:
