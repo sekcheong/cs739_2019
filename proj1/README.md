@@ -292,6 +292,7 @@ Find the latest copy among the servers send it to the requester, all other clien
 8. Misordered request tests.
 9. Mistimed request tests.
 10. Kill the load balancer.
+11. Imbalanced key distribution: asking for 10 servers, putting keys unevenly across them, and asking the wrong server for a very rare key.
 
 
 # Questions
