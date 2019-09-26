@@ -65,7 +65,7 @@ DEPS = $(wildcard src/*.h) Makefile include/lib739kv.h
 
 TESTFILES = test*.db
 
-all: obj $(SLIB) $(EXECOBJ) $(EXEC) python
+all: obj $(SLIB) $(EXECOBJ) $(EXEC) python_binding
 
 $(SLIB): $(OBJS)
 	$(CPP) $(CFLAGS) -shared $^ -o $@ $(LDFLAGS)
@@ -82,7 +82,7 @@ $(EXEC): $(EXECOBJ) $(SLIB)
 kvs739.o: kvs739.cpp $(DEPS)
 	$(CPP) $(COMMON) $(CFLAGS) $(CFLAGS_PYTHON) -c $< -o $(addprefix $(OBJDIR), $@)	
 
-python: $(SLIB) kvs739.o 
+python_binding: $(SLIB) kvs739.o 
 	$(CPP) -shared $(addprefix $(OBJDIR), kvs739.o)	$(LDFLAGS) $(SLIB) $(LDFLAGS_PYTHON) -o kvs.so
 	cp *.so ./testing
 
