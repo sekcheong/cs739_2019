@@ -138,12 +138,22 @@ void test_message() {
 int main() {
 	DEBUG_PRINT("main() [begin]");
 	
-	kv739_init(0);
-	kv739_get(0, 0);
-	kv739_put(0, 0, 0);	
+	char *args[3];
+
+	args[0] = (char *) "foo:123";
+	args[1] = (char *) "bar:123";
+	args[2] = 0;
+
+	char buffer[2048];
+
+	kv739_init(args);
+	kv739_get((char *) "apple", buffer);
+	kv739_put((char *) "orange", (char *) "good", buffer);
+
 	kv739_shutdown();
 	
 	test_kv_store();
+	
 	test_message();
 
 	DEBUG_PRINT("main() [end]");

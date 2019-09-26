@@ -19,7 +19,7 @@ LDFLAGS= -lm -pthread -ldl
 
 COMMON= -Iinclude/ -Isrc/
 
-CFLAGS=-Wall -Wno-unused-result -Wstrict-prototypes -Wno-unknown-pragmas -Wfatal-errors -fPIC 
+CFLAGS=-Wall -Wno-unused-result -Wno-unknown-pragmas -Wfatal-errors -fPIC 
 
 CFLAGS_PYTHON = `pkg-config --cflags python3` 
 
