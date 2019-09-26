@@ -53,11 +53,26 @@ void client::send_message(const message &msg, message &response) {
 }
 
 
-bool client::get(std::string &key, std::vector<char> &value, int64_t &timestamp) {
-	return false;
+bool client::get(const char *key, const char *value, int64_t *timestamp) {
+	DEBUG_PRINT("client::get() [begin]");
+	message msg(command::PUT);
+	msg.set_key(key);
+	
+	c.send_message(msg, msg);
+	
+	DEBUG_PRINT("client::get() [end]");
 }
 
 
-bool client::put(std::string &key, std::vector<char> &newvalue, std::vector<char> &oldvalue, int64_t &timestamp) {
-	return false;
+bool client::put(const char *key, const char *value, const char *ov, int64_t *timestamp) {
+	DEBUG_PRINT("client::put() [begin]");
+
+	message msg(command::PUT);
+	msg.set_key(key);
+	msg.set_value(value, strlen(value));
+	message res;
+
+	c.send_message(msg, res);
+	
+	DEBUG_PRINT("client::put() [end]");
 }

@@ -20,6 +20,8 @@ public:
 	client(const std::string &host, int port);
 	virtual ~client();
 	void send_message(const message &msg, message &response);
+	bool get(const char *key, const char *value, int64_t *timestamp);
+	bool put(const char *key, const char *value, const char *ov, int64_t *timestamp);
 	bool get(std::string &key, std::vector<char> &value, int64_t &timestamp);	
 	bool put(std::string &key, std::vector<char> &newvalue, std::vector<char> &oldvalue, int64_t &timestamp);
 private:
