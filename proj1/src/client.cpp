@@ -15,13 +15,12 @@ client::~client() {
 
 
 void client::send_message(const message &msg, message &response) {
-	
 	DEBUG_PRINT("client::send_message() [begin]");
 
 	struct sockaddr_in server_address;
 
 	memset(&server_address, 0, sizeof(server_address));
-	
+
 	server_address.sin_family = AF_INET;
 
 	inet_pton(AF_INET, host_.c_str(), &server_address.sin_addr);
@@ -57,9 +56,15 @@ bool client::get(const char *key, const char *value, int64_t *timestamp) {
 	DEBUG_PRINT("client::get() [begin]");
 	message msg(command::PUT);
 	msg.set_key(key);
-	
-	c.send_message(msg, msg);
-	
+	try {
+		send_message(msg, msg);
+	}
+	catch (exception &ex) {
+		DEBUG_PRINT("client::put() %s", ex.what());
+		return false;
+	}
+	return true;
+
 	DEBUG_PRINT("client::get() [end]");
 }
 
@@ -71,8 +76,15 @@ bool client::put(const char *key, const char *value, const char *ov, int64_t *ti
 	msg.set_key(key);
 	msg.set_value(value, strlen(value));
 	message res;
+	try {
+		send_message(msg, res);
+	}
+	catch (exception &ex) {
+		DEBUG_PRINT("client::put() %s", ex.what());
+		return false;
+        }
 
-	c.send_message(msg, res);
-	
+	return true;
+
 	DEBUG_PRINT("client::put() [end]");
 }
