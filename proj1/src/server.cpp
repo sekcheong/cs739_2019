@@ -99,6 +99,7 @@ void server::message_handler() {
 			int64_t ts;
 
 			message msg;
+			message res;
 
 			int len = sizeof(msg);
 			int n = recv(sockfd, (void *) &msg, len, MSG_WAITALL);
@@ -123,45 +124,56 @@ void server::message_handler() {
 					break;
 
     			case command::GET: {
-    					msg.clear();
 						DEBUG_PRINT("server::message_handler(): GET: key=%s", msg.key());
 						try {
+							res.clear();
+
 							buff_len = sizeof(buff);
 							if (ds_->get(msg.key(), buff, &buff_len, &ts)) {
-								msg.set_value(buff, buff_len);
-								msg.set_value_timestamp(ts);
+								res.set_value(buff, buff_len);
+								res.set_value_timestamp(ts);
+								res.set_command(command::OK);
 							}
 							else {
-								msg.set_command(command::NO_VAL);
+								res.set_command(command::NO_VAL);
 							}
+
 						}
 						catch (exception &ex) {
-							msg.set_command(command::ERROR);
+							res.set_command(command::ERROR);
 							DEBUG_PRINT("server::message_handler(): GET: Error %s", ex.what());
 						}
-						send(sockfd, (void *) &msg, sizeof(message), 0);
+						send(sockfd, (void *) &res, sizeof(message), 0);
 					}
 
 					break;
 
     			case command::PUT: {
+
 						DEBUG_PRINT("server::message_handler(): PUT: key=%s, value=%s", msg.key(), msg.get_value_string().c_str());
 						try {
+							res.clear();
 							buff_len = sizeof(buff);
-							ds_->put(msg.key(), msg.value(), msg.get_value_size(), buff, &buff_len, &ts);		
-							if (buff_len>-1) {
-								msg.set_value(buff, buff_len);
-								msg.set_value_timestamp(ts);
+							if (ds_->put(msg.key(), msg.value(), msg.get_value_size(), buff, &buff_len, &ts)) {		
+								if (buff_len>-1) {
+									res.set_value(buff, buff_len);
+									res.set_value_timestamp(ts);
+								}
+								res.set_command(command::OK);
+								DEBUG_PRINT("server::message_handler(): put returns error ");
 							}
-							msg.clear();
-							msg.set_command(command::OK);
+							else {
+								res.clear();
+								res.set_command(command::ERROR);
+							}
 						}
 						catch (exception &ex) {
-							msg.clear();
-							msg.set_command(command::ERROR);
+							res.clear();
+							res.set_command(command::ERROR);
 							DEBUG_PRINT("server::message_handler(): PUT: Error %s", ex.what());
 						}
-						send(sockfd, (void *) &msg, sizeof(message), 0);
+
+						send(sockfd, (void *) &res, sizeof(message), 0);
 					}
 
 					break;
@@ -175,9 +187,9 @@ void server::message_handler() {
 					break;
 
 				default:
-					msg.clear();
-					msg.set_command(command::NONE);
-					send(sockfd, (void *) &msg, sizeof(message), 0);
+					res.clear();
+					res.set_command(command::OK);
+					send(sockfd, (void *) &res, sizeof(message), 0);
 					break;
 			}
 		}

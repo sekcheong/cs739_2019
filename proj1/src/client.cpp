@@ -1,10 +1,12 @@
 #include "client.h"
 
+
 client::client(const std::string &host, int port) {
 	host_ = host;
 	port_ = port;
 	sock_ = 0;
 }
+
 
 client::~client() {
 	if (sock_) {
@@ -52,39 +54,62 @@ void client::send_message(const message &msg, message &response) {
 }
 
 
-bool client::get(const char *key, const char *value, int64_t *timestamp) {
+bool client::get(const char *key, char *value, int64_t *timestamp) {
 	DEBUG_PRINT("client::get() [begin]");
-	message msg(command::PUT);
-	msg.set_key(key);
+
 	try {
-		send_message(msg, msg);
+		message res;
+		message msg(command::PUT);
+		msg.set_key(key);
+		
+		send_message(msg, res);
+		
+		//if key not found
+		if (msg.get_command()==command::NO_VAL) {
+			return false;
+		}
+
+		//return the key value
+		*timestamp = res.get_value_timestamp();
+		memcpy(value, res.value(), res.get_value_size());
+		return true;
 	}
 	catch (exception &ex) {
-		DEBUG_PRINT("client::put() %s", ex.what());
+		DEBUG_PRINT("client::get() ERROR: %s", ex.what());
 		return false;
 	}
-	return true;
+	return false;
 
 	DEBUG_PRINT("client::get() [end]");
 }
 
 
-bool client::put(const char *key, const char *value, const char *ov, int64_t *timestamp) {
+bool client::put(const char *key, const char *value,  char *ov, int64_t *timestamp) {
 	DEBUG_PRINT("client::put() [begin]");
-
-	message msg(command::PUT);
-	msg.set_key(key);
-	msg.set_value(value, strlen(value));
-	message res;
+	
 	try {
+		message res;
+		message msg(command::PUT);
+		msg.set_key(key);
+		msg.set_value(value, strlen(value));
+
 		send_message(msg, res);
+
+		//request failed
+		if (res.get_command()==command::OK) {
+			return false;
+		}
+
+		*timestamp = res.get_value_timestamp();
+		memcpy((void*)ov, res.value(), res.get_value_size());
+		
 	}
 	catch (exception &ex) {
-		DEBUG_PRINT("client::put() %s", ex.what());
+		DEBUG_PRINT("client::put() ERROR: %s", ex.what());
 		return false;
-        }
+	}
 
-	return true;
+	return false;
 
 	DEBUG_PRINT("client::put() [end]");
 }

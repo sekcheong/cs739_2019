@@ -36,6 +36,12 @@ data_store::data_store(const char *filename) {
  		throw exception("Error creating the date_store table", ret);
  	}
 
+ 	const char *sql2 = "CREATE TABLE IF NOT EXISTS data_store_log (csn INTEGER, key TEXT KEY, value BLOB, timestamp INTEGER);"; 	
+ 	ret = sqlite3_exec(db_, sql2, 0, 0, 0);
+ 	if (ret!=SQLITE_OK) {
+ 		throw exception("Error creating the date_store_log table", ret);
+ 	}
+
 	DEBUG_PRINT("  done");
 	DEBUG_PRINT("data_store::data_store() [end]");
 }
