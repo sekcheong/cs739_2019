@@ -1,6 +1,9 @@
 import kvs
 
-servers = ["mango:500123","coco:500124"] 
+servers = [
+	"mango:500123",
+	"coco:500124"
+] 
 
 kvs.init(servers)
 
