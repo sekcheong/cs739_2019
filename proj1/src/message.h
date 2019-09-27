@@ -1,6 +1,8 @@
 #ifndef MESSAGE_H
 #define MESSAGE_H
 
+#include "lib739kv.h"
+
 #include <chrono>
 #include <cstdint>
 #include <cctype>

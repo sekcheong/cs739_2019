@@ -2,6 +2,7 @@
 #include "message.h"
 #include "exception.h"
 
+
 server::server(const std::string &host, int port, const std::string &db_file) {
 	DEBUG_PRINT("server::server() [begin]");
 	DEBUG_PRINT("server::server() host=%s, port=%d", host.c_str(), port);
@@ -94,7 +95,7 @@ void server::message_handler() {
 			
 			if (!running_) break;
 			
-			char buff[MAX_VALUE_LEN];
+			char buff[MAX_VALUE_SIZE];
 			int buff_len = sizeof(buff);	
 			int64_t ts;
 
@@ -159,12 +160,12 @@ void server::message_handler() {
 									res.set_value(buff, buff_len);
 									res.set_value_timestamp(ts);
 								}
-								res.set_command(command::OK);
-								DEBUG_PRINT("server::message_handler(): put returns error ");
+								res.set_command(command::OK);							
 							}
 							else {
 								res.clear();
 								res.set_command(command::ERROR);
+								DEBUG_PRINT("server::message_handler(): PUT: Returns FALSE!");
 							}
 						}
 						catch (exception &ex) {

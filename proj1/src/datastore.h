@@ -4,13 +4,12 @@
 #include <string>
 #include <memory>
 #include <vector>
+
+#include "lib739kv.h"
 #include "sqlite3.h"
 #include "debug.h"
 #include "exception.h"
 #include "sqlstatement.h"
-
-#define MAX_KEY_LEN 128
-#define MAX_VALUE_LEN 2048
 
 int64_t os_timestamp();
 
@@ -21,8 +20,11 @@ public:
 	data_store(const char *filename);
 	virtual ~data_store();
 
-	virtual bool get(const char *key, const char *value, int *len, int64_t *timestamp);
-	virtual bool put(const char *key, const char *value, int len, const char *ov, int *ov_len, int64_t *timestamp);
+	virtual bool get(const char *key, char *value, int *len, int64_t *timestamp);
+	virtual bool put(const char *key, const char *value, int len, char *ov, int *ov_len, int64_t *timestamp);
+
+	virtual bool get_meta(const char *key, char *value, int *len);
+	virtual bool put_meta(const char *key, const char *value);
 	
 	//returns the latest timestamp, returns -1 if no value exist	
 	virtual int64_t get_last_timestamp();
@@ -30,21 +32,19 @@ public:
 	//returns the earliest timestamp, returns -1 if no value exist
 	virtual int64_t get_first_timestamp();
 
-	virtual int64_t get_timestamp(const char *key);
-
-	virtual int64_t get_next(const char *key, int *kl, const char *value, int *vl, int64_t timestamp);
+	virtual int64_t get_timestamp(const char *key);	
 	
 	virtual bool validate_key(const char* key);
 	
 	virtual bool validate_value(const char *value, int len);
 
-	virtual bool get(const char *key, const char *value, int *len) {
+	virtual bool get(const char *key, char *value, int *len) {
 		int64_t ts;
 		return get(key, value, len, &ts);
 	}
 
 	virtual bool put(const char *key, const char *value, int len) {
-		char ov[MAX_VALUE_LEN];
+		char ov[MAX_VALUE_SIZE];
 		int ov_len = sizeof(ov);
 		int64_t ts;
 		return put(key, value, len, ov, &ov_len, &ts);

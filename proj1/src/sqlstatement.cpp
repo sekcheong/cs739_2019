@@ -82,7 +82,7 @@ std::string sql_statement::read_text(int col) {
 }
 
 
-int sql_statement::read_blob(int col, const char *buffer, int length) {
+int sql_statement::read_blob(int col, char *buffer, int length) {
 	if (buffer==0 || length==0) {
 		int len = sqlite3_column_bytes(stmt_, col);
 		return len;

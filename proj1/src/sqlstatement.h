@@ -18,7 +18,7 @@ public:
 	void bind_int64(int pos, int64_t value);
 	bool read();
 	std::string read_text(int col);
-	int read_blob(int col, const char *buffer, int length);
+	int read_blob(int col, char *buffer, int length);
 	int64_t read_int64(int col);
 private:
 	sqlite3_stmt *stmt_ = nullptr;

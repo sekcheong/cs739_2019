@@ -1,6 +1,10 @@
 #ifndef LIB739KB_H
 #define LIB739KB_H
 
+
+#define MAX_KEY_SIZE   128
+#define MAX_VALUE_SIZE 2048
+
 //Provide a null-terminated array of server names (similarly to argv[]). 
 //Each server name has the format "host:port" and initialize the client code. 
 //Returns 0 on success and -1 on failure. 
