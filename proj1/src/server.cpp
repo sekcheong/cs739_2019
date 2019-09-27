@@ -151,16 +151,15 @@ void server::message_handler() {
 
     			case command::PUT: {
 
-						DEBUG_PRINT("server::message_handler(): PUT: key=%s, value=%s", msg.key(), msg.get_value_string().c_str());
+						DEBUG_PRINT("server::message_handler(): PUT: key=%s, value=%s, timestamp=%d", msg.key(), msg.get_value_string().c_str(), msg.get_value_timestamp());
 						try {
 							res.clear();
 							buff_len = sizeof(buff);
-							if (ds_->put(msg.key(), msg.value(), msg.get_value_size(), buff, &buff_len, &ts)) {		
-								if (buff_len>-1) {
-									res.set_value(buff, buff_len);
-									res.set_value_timestamp(ts);
-								}
-								res.set_command(command::OK);							
+							int64_t ts = msg.get_value_timestamp();
+							if (ds_->put(msg.key(), msg.value(), msg.get_value_size(), &ts)) {
+								res.set_value(buff, buff_len);
+								res.set_value_timestamp(ts);
+								res.set_command(command::OK);
 							}
 							else {
 								res.clear();

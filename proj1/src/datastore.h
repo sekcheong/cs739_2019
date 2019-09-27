@@ -11,7 +11,6 @@
 #include "exception.h"
 #include "sqlstatement.h"
 
-int64_t os_timestamp();
 
 
 class data_store {
@@ -21,7 +20,7 @@ public:
 	virtual ~data_store();
 
 	virtual bool get(const char *key, char *value, int *len, int64_t *timestamp);
-	virtual bool put(const char *key, const char *value, int len, char *ov, int *ov_len, int64_t *timestamp);
+	virtual bool put(const char *key, const char *value, int len, int64_t *timestamp);
 
 	virtual bool get_meta(const char *key, char *value, int *len);
 	virtual bool put_meta(const char *key, const char *value);
@@ -44,16 +43,16 @@ public:
 	}
 
 	virtual bool put(const char *key, const char *value, int len) {
-		char ov[MAX_VALUE_SIZE];
-		int ov_len = sizeof(ov);
-		int64_t ts;
-		return put(key, value, len, ov, &ov_len, &ts);
+		int64_t ts = 0;
+		return put(key, value, len, &ts);
 	}
 
 	virtual bool put(const char *key, const char *value) {
 		int len = strlen(value);
 		return put(key, value, len);
 	}
+
+	static int64_t os_timestamp();
 
 private:
 	std::string filename_;

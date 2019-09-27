@@ -28,26 +28,16 @@ void test_kv_store() {
 	data_store ds("test.db");
 
 	try {
-		int64_t ts;			
-		char ov[2048];
-		int ov_len = sizeof(ov);	
-
+		int64_t ts = 0;
 		const char *key = "foo";
-		const char *nv = "What's up doc?";
-		
-		ds.put(key, nv, strlen(nv), ov, &ov_len, &ts);
+		const char *nv = "What's up doc?";		
+		ds.put(key, nv, &ts);
 		std::cout << "key      : " << key << std::endl;		
-		//if we have an old value
-		if (ov_len>-1) {
-			ov[ov_len] = 0;
-			std::cout << "old value: " << ov << std::endl;
-			std::cout << "time     : " << ts << std::endl;
-		}
+		std::cout << "timestamp: " << ts << std::endl;		
 	}
 	catch (exception &ex) {
 		std::cerr << ex.what()  << " error_code: " << ex.code() << std::endl;
 	}
-
 	
 	try {
 		ds.put("foo", "Hello World!");
@@ -58,9 +48,9 @@ void test_kv_store() {
 	}
 
 	try {
-		int64_t ts;			
+		int64_t ts;
 		char buff[2048];
-		int len = sizeof(buff);	
+		int len = sizeof(buff);
 		const char *key = "foo";
 
 		std::cout << "key      : " << key << std::endl;
@@ -73,28 +63,6 @@ void test_kv_store() {
 			std::cout << "Key doesn't exist!" << std::endl;
 		}
 
-	}
-	catch (exception &ex) {
-		std::cerr << ex.what()  << " error_code: " << ex.code() << std::endl;
-	}
-
-	try {
-		int64_t ts;			
-		char ov[2048];
-		int ov_len = sizeof(ov);	
-
-		const char *key = "foo";
-		const char *nv = "What's up doc?";
-		
-		ds.put("foo", nv, strlen(nv), ov, &ov_len, &ts);
-		std::cout << "key      : " << key << std::endl;
-
-		//if we have an old value
-		if (ov_len>-1) {
-			ov[ov_len] = 0;
-			std::cout << "old value: " << ov << std::endl;
-			std::cout << "time     : " << ts << std::endl;
-		}
 	}
 	catch (exception &ex) {
 		std::cerr << ex.what()  << " error_code: " << ex.code() << std::endl;

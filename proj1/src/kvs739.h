@@ -4,8 +4,10 @@
 #include <memory>
 #include <iostream>
 #include <cstring>
-#include <stdlib.h>
 #include <Python.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "lib739kv.h"
 #include "datastore.h"
@@ -80,22 +82,53 @@ static PyObject *DataStore_new(PyTypeObject *type, PyObject *args, PyObject *kwd
 static int DataStore_init(DataStore *self, PyObject *args, PyObject *kwds);
 static void DataStore_dealloc(DataStore* self);
 static PyObject* DataStore_get(DataStore *self, PyObject *args);
+static PyObject* DataStore_put_private(DataStore *self, char *key, char *value);
 static PyObject* DataStore_put(DataStore *self, PyObject *args);
-
+static PyObject* DataStore_get_meta(DataStore *self, PyObject *args);
+static PyObject* DataStore_put_meta(DataStore *self, PyObject *args);
+static PyObject* DataStore_last_timestamp(DataStore *self, PyObject *args);
+static PyObject* DataStore_first_timestamp(DataStore *self, PyObject *args);
 
 static PyMethodDef DataStore_methods[] = {    
     {   
         "get", 
         (PyCFunction) DataStore_get, 
         METH_VARARGS,
-        "Retrieve the value corresponding to the key."
+        "Retrieve the (value, timestamp) tuple corresponding to the key. If the key does not exist an exception will be thrown."
     }, 
     
     {   
         "put", 
         (PyCFunction) DataStore_put, 
         METH_VARARGS,
-        "Perform a get operation on the current value into old_value and then store the specified value."
+        "Perform a get operation on the current value into and then store the specified value. "
+    }, 
+    {   
+        "get_meta", 
+        (PyCFunction) DataStore_get_meta, 
+        METH_VARARGS,
+        "Retrive a metadata of a corresponding key. If the key does not exist an exception will be thrown."
+    }, 
+    
+    {   
+        "put_meta", 
+        (PyCFunction) DataStore_put_meta, 
+        METH_VARARGS,
+        "Set the metadata value of a corresponding key."
+    }, 
+    
+    {   
+        "last_timestamp", 
+        (PyCFunction) DataStore_last_timestamp, 
+        METH_VARARGS,
+        "Get the latest timestamp value."
+    }, 
+
+    {   
+        "first_timestamp", 
+        (PyCFunction) DataStore_first_timestamp, 
+        METH_VARARGS,
+        "Set the oldest timtstamp value."
     }, 
     
     {NULL, NULL, 0, NULL}
