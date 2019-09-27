@@ -201,13 +201,31 @@ static PyObject* DataStore_put(DataStore *self, PyObject *args) {
 }
 
 
+static PyObject *DataStoreServer_new(PyTypeObject *type, PyObject *args, PyObject *kwds) {
+	
+	Py_RETURN_NONE;
+}
+
+
+static int DataStoreServer_init(DataStoreServer *self, PyObject *args, PyObject *kwds) {
+	return 0;
+}
+
+
+static void DataStoreServer_dealloc(DataStoreServer* self) {
+
+
+}
+
 
 static PyObject *DataStoreClient_new(PyTypeObject *type, PyObject *args, PyObject *kwds) {
+
 	Py_RETURN_NONE;
 }
 
 
 static int DataStoreClient_init(DataStoreClient *self, PyObject *args, PyObject *kwds) {
+
 	return 0;
 }
 

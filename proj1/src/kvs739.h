@@ -170,6 +170,68 @@ static PyTypeObject DataStoreType = {
 };
 
 
+
+
+typedef struct {
+    PyObject_HEAD    
+    PyObject *frame_callback;
+} DataStoreServer;
+
+
+static PyMethodDef DataStoreServer_methods[] = {    
+    
+    {NULL, NULL, 0, NULL}
+};
+
+
+static PyObject *DataStoreServer_new(PyTypeObject *type, PyObject *args, PyObject *kwds);
+static int DataStoreServer_init(DataStoreServer *self, PyObject *args, PyObject *kwds);
+static void DataStoreServer_dealloc(DataStoreServer* self);
+
+static PyTypeObject DataStoreServerType = {
+    PyVarObject_HEAD_INIT(NULL, 0)
+    "kvs.DataStoreServer",            /* tp_name */
+    sizeof(DataStoreServer),          /* tp_basicsize */
+    0,                                /* tp_itemsize */
+    (destructor)DataStoreServer_dealloc,    /* tp_dealloc */
+    0,                          /* tp_print */
+    0,                          /* tp_getattr */
+    0,                          /* tp_setattr */
+    0,                          /* tp_reserved */
+    0,                          /* tp_repr */
+    0,                          /* tp_as_number */
+    0,                          /* tp_as_sequence */
+    0,                          /* tp_as_mapping */
+    0,                          /* tp_hash  */
+    0,                          /* tp_call */
+    0,                          /* tp_str */
+    0,                          /* tp_getattro */
+    0,                          /* tp_setattro */
+    0,                          /* tp_as_buffer */
+    Py_TPFLAGS_DEFAULT |
+    Py_TPFLAGS_BASETYPE,        /* tp_flags */
+    "DataStore server",         /* tp_doc */
+    0,                          /* tp_traverse */
+    0,                          /* tp_clear */
+    0,                          /* tp_richcompare */
+    0,                          /* tp_weaklistoffset */
+    0,                          /* tp_iter */
+    0,                          /* tp_iternext */
+    DataStoreServer_methods,    /* tp_methods */
+    0,                          /* tp_members */
+    0,                          /* tp_getset */
+    0,                          /* tp_base */
+    0,                          /* tp_dict */
+    0,                          /* tp_descr_get */
+    0,                          /* tp_descr_set */
+    0,                          /* tp_dictoffset */
+    (initproc)DataStoreServer_init,  /* tp_init */
+    0,                          /* tp_alloc */
+     DataStoreServer_new,        /* tp_new */
+};
+
+
+
 typedef struct {
     PyObject_HEAD    
     PyObject *frame_callback;
