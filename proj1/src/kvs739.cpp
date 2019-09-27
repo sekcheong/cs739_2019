@@ -94,9 +94,34 @@ static PyObject* kvs_put(PyObject *self, PyObject *args) {
 }
 
 
-
 static PyObject *DataStore_new(PyTypeObject *type, PyObject *args, PyObject *kwds) {
-	Py_RETURN_NONE;
+	DEBUG_PRINT("DataStore_new() [begin]");
+    DataStore *self;
+
+    self = (DataStore *)type->tp_alloc(type, 0);
+    if (self == NULL) {      
+        PyErr_SetString(PyExc_RuntimeError, "Error allocating DataStore object");
+        return NULL;
+    }
+
+    //try to create the camera either by index or info 
+    try {
+    	char* filename;
+		auto argc = PyTuple_Size(args);   	
+    	if ((argc==1) && PyArg_ParseTuple(args, "s", &filename)) {
+        	self->store_p = new data_store(filename);
+    	}
+    	else {
+    		PyErr_SetString(PyExc_RuntimeError, "Invalid parameters"); 
+    	}
+    }
+    catch (exception &ex) {        
+        PyErr_SetString(PyExc_RuntimeError, "Error creating data store.");
+        return NULL;
+    }
+
+    DEBUG_PRINT("DataStore_new() [end]");
+    return (PyObject *)self;
 }
 
 
@@ -106,8 +131,75 @@ static int DataStore_init(DataStore *self, PyObject *args, PyObject *kwds) {
 
 
 static void DataStore_dealloc(DataStore* self) {
-
+ 	DEBUG_PRINT("DataStore_dealloc() [begin]");
+    if (self->store_p!=nullptr) {
+        try {
+            delete self->store_p;       
+            self->store_p = nullptr;
+        }
+        catch (exception &ex) {
+            PyErr_SetString(PyExc_RuntimeError, "Error deallocating datastore.");
+        }
+    }
+    Py_TYPE(self)->tp_free((PyObject*)self);
+    DEBUG_PRINT("DataStore_dealloc() [end]");    
 }
+
+static PyObject* DataStore_get(DataStore *self, PyObject *args) {
+	char* key;
+   
+	auto argc = PyTuple_Size(args);   
+
+    if ((argc==1) && PyArg_ParseTuple(args, "s", &key)) {
+
+    	char buffer[MAX_VALUE_SIZE] = {0};
+		int64_t ts = 0;
+		int len = MAX_VALUE_SIZE-1;
+		data_store *ds = self->store_p;
+
+		if (ds->get(key, buffer, &len,  &ts) ==1) {
+			buffer[len]=0;
+			return Py_BuildValue("(sL)", buffer, ts);
+		}
+		else {
+			PyErr_SetString(PyExc_RuntimeError, "key not found");
+		}
+
+    }	
+    else {
+		PyErr_SetString(PyExc_RuntimeError, "Invalid parameters"); 
+    }
+    Py_RETURN_NONE;
+}
+
+static PyObject* DataStore_put(DataStore *self, PyObject *args) {
+	char* key;
+    char* value;
+	auto argc = PyTuple_Size(args);   
+
+    if ((argc==2) && PyArg_ParseTuple(args, "ss", &key, &value)) {
+
+    	char oldval[MAX_VALUE_SIZE] = {0};
+		int64_t ts = 0;
+		int len = MAX_VALUE_SIZE-1;
+
+		data_store *ds = self->store_p;
+		if (ds->put(key, value, strlen(value), oldval, &len, &ts) ==1) {		
+			if (ts>0) oldval[len] = 0;
+			else oldval[0] = 0;
+			return Py_BuildValue("(sL)", oldval, ts);
+		}
+		else {
+			PyErr_SetString(PyExc_RuntimeError, "put value failed");
+		}
+
+    }	
+    else {
+		PyErr_SetString(PyExc_RuntimeError, "Invalid parameters"); 
+    }
+    Py_RETURN_NONE;
+}
+
 
 
 static PyObject *DataStoreClient_new(PyTypeObject *type, PyObject *args, PyObject *kwds) {
@@ -135,7 +227,12 @@ static struct PyModuleDef kvsmodule = {
 
 
 PyMODINIT_FUNC PyInit_kvs(void) {
-    PyObject* m;
-    m = PyModule_Create(&kvsmodule);
-    return m;
+    PyObject* module = PyModule_Create(&kvsmodule);
+
+    if (!module) return NULL;
+    if (PyType_Ready(&DataStoreType) < 0) return NULL;
+    Py_INCREF(&DataStoreType);
+    PyModule_AddObject(module, "DataStore", (PyObject *)&DataStoreType);
+
+    return module;
 }

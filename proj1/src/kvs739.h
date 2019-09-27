@@ -6,12 +6,14 @@
 #include <cstring>
 #include <stdlib.h>
 #include <Python.h>
+
 #include "lib739kv.h"
+#include "datastore.h"
+#include "client.h"
+#include "server.h"
+#include "message.h"
+#include "strutil.h"
 
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 //Provide a null-terminated array of server names (similarly to argv[]). 
 //Each server name has the format "host:port" and initialize the client code. 
@@ -32,10 +34,6 @@ static PyObject* kvs_get(PyObject *self, PyObject *args);
 //Should return 0 on success if there is an old value, 1 on success if there was no old value, and -1 on failure. 
 //The old_value parameter must be at least one byte larger than the maximum value size. 
 static PyObject* kvs_put(PyObject *self, PyObject *args);
-
-#ifdef __cplusplus
-}
-#endif
 
 
 PyMODINIT_FUNC PyInit_kvs(void);
@@ -74,16 +72,31 @@ static PyMethodDef module_methods[] = {
 typedef struct {
     PyObject_HEAD    
     PyObject *frame_callback;
+    data_store *store_p;
 } DataStore;
 
 
+static PyObject *DataStore_new(PyTypeObject *type, PyObject *args, PyObject *kwds);
+static int DataStore_init(DataStore *self, PyObject *args, PyObject *kwds);
+static void DataStore_dealloc(DataStore* self);
+static PyObject* DataStore_get(DataStore *self, PyObject *args);
+static PyObject* DataStore_put(DataStore *self, PyObject *args);
+
+
 static PyMethodDef DataStore_methods[] = {    
-    // {
-    //     // "features",
-    //     // (PyCFunction)Camera_features, 
-    //     // METH_NOARGS,
-    //     // "get list of camera features"
-    // },
+    {   
+        "get", 
+        (PyCFunction) DataStore_get, 
+        METH_VARARGS,
+        "Retrieve the value corresponding to the key."
+    }, 
+    
+    {   
+        "put", 
+        (PyCFunction) DataStore_put, 
+        METH_VARARGS,
+        "Perform a get operation on the current value into old_value and then store the specified value."
+    }, 
     
     {NULL, NULL, 0, NULL}
 };
@@ -113,10 +126,6 @@ static PyMethodDef DataStore_methods[] = {
 
 //   {NULL, 0, 0, NULL, NULL}  /* Sentinel */
 // };
-
-static PyObject *DataStore_new(PyTypeObject *type, PyObject *args, PyObject *kwds);
-static int DataStore_init(DataStore *self, PyObject *args, PyObject *kwds);
-static void DataStore_dealloc(DataStore* self);
 
 static PyTypeObject DataStoreType = {
     PyVarObject_HEAD_INIT(NULL, 0)
@@ -161,7 +170,6 @@ static PyTypeObject DataStoreType = {
 };
 
 
-
 typedef struct {
     PyObject_HEAD    
     PyObject *frame_callback;
@@ -169,12 +177,6 @@ typedef struct {
 
 
 static PyMethodDef DataStoreClient_methods[] = {    
-    // {
-    //     // "features",
-    //     // (PyCFunction)Camera_features, 
-    //     // METH_NOARGS,
-    //     // "get list of camera features"
-    // },
     
     {NULL, NULL, 0, NULL}
 };
@@ -226,4 +228,5 @@ static PyTypeObject DataStoreClientType = {
     DataStoreClient_new,        /* tp_new */
 };
 
+static PyObject* module = nullptr;
 #endif
