@@ -94,6 +94,37 @@ static PyObject* kvs_put(PyObject *self, PyObject *args) {
 }
 
 
+
+static PyObject *DataStore_new(PyTypeObject *type, PyObject *args, PyObject *kwds) {
+	Py_RETURN_NONE;
+}
+
+
+static int DataStore_init(DataStore *self, PyObject *args, PyObject *kwds) {
+	return 0;
+}
+
+
+static void DataStore_dealloc(DataStore* self) {
+
+}
+
+
+static PyObject *DataStoreClient_new(PyTypeObject *type, PyObject *args, PyObject *kwds) {
+	Py_RETURN_NONE;
+}
+
+
+static int DataStoreClient_init(DataStoreClient *self, PyObject *args, PyObject *kwds) {
+	return 0;
+}
+
+
+static void DataStoreClient_dealloc(DataStoreClient* self) {
+
+}
+
+
 static struct PyModuleDef kvsmodule = {
     PyModuleDef_HEAD_INIT,
     "kvs",
