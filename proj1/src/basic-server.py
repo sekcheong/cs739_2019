@@ -16,9 +16,15 @@ from pprint import pprint
 
 class KvEntry:
 
-    def __init__(self, v = None, t = None):
+    def __init__(self, k = None, v = None, t = None):
+        if not k:
+            k = ""
+        if not t:
+            t = datetime.min
+
+        self.k = k
         self.v = v
-        self.t = datetime.min
+        self.t = t
 
     def __repr__(self):
         return "{} @ {}.{}".format(self.v, self.t.second, self.t.microsecond)
@@ -29,21 +35,18 @@ class KvServer:
     servers = list()
 
     def __init__(self, me, allServers, initInst):
-        self.me = str(me)
-        self.kvs = defaultdict(KvEntry) # kvs[key] = [(v: value, t: timestamp), (v:v, t:t), ...]
+        self.id = str(me)
+        self.kvs = dict() # kvs[key] = [(v: value, t: timestamp), (v:v, t:t), ...]
         self.serverUpdateTimes = defaultdict(int) # s[srv] = [(srv, timestamp), (s, t), ...]
         self.live = 1
 
         for serverPort in allServers:
             self.serverUpdateTimes[str(serverPort)] = initInst
 
-    def __str__(self):
-        return "port {} knows {}".format(self.me, self.serverUpdateTimes.keys())
-
     def __repr__(self):
         return ("{}: {} {}\n    {}".format(
-            self.me, "1" if self.live else "0",
-            ["{}: {}".format(k, self.kvs[k]) for k in self.kvs],
+            self.id, "1" if self.live else "0",
+            [(k, self.kvs[k]) for k in self.kvs],
             "\n    ".join([
                 "{}: {}.{}".format(k,
                                    self.serverUpdateTimes[k].second,
@@ -53,14 +56,14 @@ class KvServer:
     def insert(self, key, value, time = None):
         if not time:
             time = datetime.now()
-        self.kvs[key] = KvEntry(value, time)
-        self.serverUpdateTimes[self.me] = time
+        self.kvs[key] = KvEntry(key, value, time)
+        self.serverUpdateTimes[self.id] = time
         self.syncBidi(key, value, time)
 
     def syncBidi(self, k, v, t):
         for server in KvServer.servers:
-            if server.live:
-                self.update(server, server.receive(self.me, k, v, t))
+            if server.live and server.id != self.id:
+                self.update(server, server.receive(self.id, k, v, t))
 
     def receive(self, sender, k, v, t):
         """A remote server sent us an update.
@@ -68,20 +71,18 @@ class KvServer:
         Find the oldest key we think they have and send them keys that are newer."""
 
         # update our key if necessary
-        if (self.kvs[k].t < t):
-            self.kvs[k].v = v
-            self.kvs[k].t = t
+        if (k not in self.kvs or self.kvs[k].t < t):
+            self.kvs[k] = KvEntry(k, v, t)
 
         # we need to play the updates forward from the oldest remote server time.
-        playback = t if t < self.serverUpdateTimes[sender] else self.serverUpdateTimes[sender]
+        playback = min(t, self.serverUpdateTimes[sender])
 
-        #import pdb; pdb.set_trace()
         # these are the keys newer than the remote server
-        replay = [self.kvs[k] for k in self.kvs if self.kvs[k].t > t]
+        replay = [self.kvs[k] for k in self.kvs if self.kvs[k].t > playback]
 
         # the remote server is now as updated as the most recent update we sent
         # it, or it sent us, whichever is newer
-        self.serverUpdateTimes[sender] = max([t for replay.t in replay] + [t])
+        self.serverUpdateTimes[sender] = max([x.t for x in replay] + [t])
 
         return replay
 
@@ -92,12 +93,12 @@ class KvServer:
         as updated as the most recent key they sent us.
 
         """
-        for k, update in replay:
-            if self.kvs[k].t <= update.t:
-                self.kvs[k] = update
+        for k in replay:
+            if k not in self.kvs or self.kvs[k].t <= k.t:
+                self.kvs[k.k] = k
 
         try:
-            self.serverUpdateTimes[server] = max([t for replay.t in replay])
+            self.serverUpdateTimes[server.id] = max([x.t for x in replay])
         except ValueError:
             # nothing to replay, so the server's update time is already caught up.
             pass
@@ -105,40 +106,59 @@ class KvServer:
         # oh shoot, the remote sent us back updates that were older than we are right now
         # that means we were out of date, so roll back our clock.
         # TODO: verify servers *can* advance in time and be considered caught up.
-        self.serverUpdateTimes[self.me] = (min([t for replay.t in replay] +
-                                          [self.serverUpdateTimes[self.me]]))
+        self.serverUpdateTimes[self.id] = (min([x.t for x in replay] +
+                                               [self.serverUpdateTimes[self.id]]))
 
-initInst = datetime.now()
-server_ports = list(range(7390, 7393))
-KvServer.servers = [KvServer(port, server_ports, initInst) for port in server_ports]
+def test():
 
+    # set up system
+    initInst = datetime.now()
+    server_ports = list(range(7390, 7393))
+    KvServer.servers = [KvServer(port, server_ports, initInst) for port in server_ports]
 
+    # name our servers
+    alice = KvServer.servers[0]
+    bob = KvServer.servers[1]
+    calvin = KvServer.servers[2]
 
-alice = KvServer.servers[0]
-bob = KvServer.servers[1]
-calvin = KvServer.servers[2]
+    # 1. insert a value.
 
-alice.insert("a", 1)
+    alice.insert("a", 1)
 
-print("\n----")
-pprint(KvServer.servers)
+    print("\n----")
+    pprint(KvServer.servers)
 
-bob.live = 0
+    # 2. kill off a server and insert more values
 
-calvin.insert("a", 2)
-calvin.insert("b", 3)
+    bob.live = 0
+    calvin.insert("a", 2)
+    calvin.insert("b", 3)
 
-print("----")
-pprint(KvServer.servers)
+    print("----")
+    pprint(KvServer.servers)
 
-bob.live = 1
-bob.insert("c", 10)
+    # 3. revivify the server and watch it update.
 
-print("----")
-pprint(KvServer.servers)
+    bob.live = 1
+    alice.insert("d", 5)
 
-alice.insert("d", 5)
-print("----")
-pprint(KvServer.servers)
+    print("----")
+    pprint(KvServer.servers)
 
-# TODO heartbeat: every second, fire a sync from one server to all the others
+    # 4. insert a value into the previously dead server.
+
+    bob.insert("c", 10)
+    print("----")
+    pprint(KvServer.servers)
+
+    # on my laptop, we can insert about a billion keys a second.
+    # that seems really fast.
+    import timeit
+    print(timeit.timeit(
+        lambda: map(bob.insert, range(0, 1000000), range(1000000, 2000000)),
+        number=1000000))
+
+    # TODO heartbeat: every second, fire a sync from one server to all the others
+
+if __name__ == "__main__":
+    test()
