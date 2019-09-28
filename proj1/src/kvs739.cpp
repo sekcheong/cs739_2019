@@ -339,46 +339,106 @@ static PyObject* DataStore_first_timestamp(DataStore *self, PyObject *args) {
 }
 
 
-static PyObject *DataStoreServer_new(PyTypeObject *type, PyObject *args, PyObject *kwds) {
-	DEBUG_PRINT("DataStoreServer_new() [begin]");
-    // DataStoreServer *self;
-
-    // self = (DataStoreServer *)type->tp_alloc(type, 0);
-    // if (self == NULL) {      
-    //     PyErr_SetString(PyExc_RuntimeError, "Error allocating DataStoreServer object");
-    //     return NULL;
-    // }
-
-    // //try to create the camera either by index or info 
-    // try {
-    // 	char* host;
-    // 	int port;
-    // 	if (PyArg_ParseTuple(args, "si", &host, &port)) {
-    //     	self->store_p = new data_store(filename);
-    // 	}
-    // 	else {
-    // 		PyErr_SetString(PyExc_RuntimeError, "Invalid parameters"); 
-    // 	}
-    // }
-    // catch (exception &ex) {        
-    //     PyErr_SetString(PyExc_RuntimeError, "Error creating data store.");
-    //     return NULL;
-    // }
-
-    DEBUG_PRINT("DataStoreServer_new() [end]");
-    Py_RETURN_NONE;
-    //return (PyObject *)self;
-}
-
-
 static int DataStoreServer_init(DataStoreServer *self, PyObject *args, PyObject *kwds) {
 	return 0;
 }
 
 
+static PyObject *DataStoreServer_new(PyTypeObject *type, PyObject *args, PyObject *kwds) {
+	DEBUG_PRINT("DataStoreServer_new() [begin]");
+    DataStoreServer *self;
+
+    self = (DataStoreServer*)type->tp_alloc(type, 0);
+    
+    if (self == NULL) {      
+        PyErr_SetString(PyExc_RuntimeError, "Error allocating DataStore object");
+        return NULL;
+    }
+
+    //try to create the camera either by index or info 
+    try {
+    	char* host;
+    	int port;
+    	char* dbfile;
+
+		auto argc = PyTuple_Size(args);   	
+    	if ((argc!=3) || !PyArg_ParseTuple(args, "sis", &host, &port, &dbfile)) {
+    		PyErr_SetString(PyExc_RuntimeError, "Invalid parameters");
+    		return NULL;
+    	}
+    	self->server_p = new server(host, port, dbfile);
+    }
+    catch (exception &ex) {        
+        PyErr_SetString(PyExc_RuntimeError, "Error creating DataStoreServer.");
+        return NULL;
+    }
+
+    DEBUG_PRINT("DataStoreServer_new() [end]");
+    return (PyObject *)self;
+    Py_RETURN_NONE;
+    //return (PyObject *)self;
+}
+
+
 static void DataStoreServer_dealloc(DataStoreServer* self) {
 
+ 	DEBUG_PRINT("DataStoreServer_dealloc() [begin]");
+    if (self->server_p!=nullptr) {
+        try {
+            delete self->server_p;       
+            self->server_p = nullptr;
+        }
+        catch (exception &ex) {
+            PyErr_SetString(PyExc_RuntimeError, "Error deallocating datastore.");
+            return;
+        }
+    }
+    Py_TYPE(self)->tp_free((PyObject*)self);
+    DEBUG_PRINT("DataStoreServer_dealloc() [end]");  
+}
 
+
+static PyObject* DataStoreServer_serve(DataStoreServer *self, PyObject *args) {
+	try {
+		server *s = self->server_p;
+		s->serve();
+		Py_RETURN_NONE;
+	}
+	catch (exception &ex) {
+		PyErr_SetString(PyExc_RuntimeError, ex.what());
+		return NULL;
+	}
+}
+
+
+static PyObject* DataStoreServer_stop(DataStoreServer *self, PyObject *args) {
+	try {
+		server *s = self->server_p;
+		s->stop();
+		Py_RETURN_NONE;
+	}
+	catch (exception &ex) {
+		PyErr_SetString(PyExc_RuntimeError, ex.what());
+		return NULL;
+	}
+}
+
+
+static PyObject* DataStoreServer_running(DataStoreServer *self, PyObject *args) {
+	try {
+		server *s = self->server_p;
+		if (s->is_running()) {
+			Py_BuildValue("O", Py_True);
+		}
+		else {
+			Py_BuildValue("O", Py_False);
+		}
+		Py_RETURN_NONE;
+	}
+	catch (exception &ex) {
+		PyErr_SetString(PyExc_RuntimeError, ex.what());
+		return NULL;
+	}
 }
 
 
@@ -389,7 +449,6 @@ static PyObject *DataStoreClient_new(PyTypeObject *type, PyObject *args, PyObjec
 
 
 static int DataStoreClient_init(DataStoreClient *self, PyObject *args, PyObject *kwds) {
-
 	return 0;
 }
 
@@ -412,9 +471,17 @@ PyMODINIT_FUNC PyInit_kvs(void) {
     PyObject* module = PyModule_Create(&kvsmodule);
 
     if (!module) return NULL;
+
     if (PyType_Ready(&DataStoreType) < 0) return NULL;
     Py_INCREF(&DataStoreType);
     PyModule_AddObject(module, "DataStore", (PyObject *)&DataStoreType);
 
+    if (PyType_Ready(&DataStoreServerType) < 0) return NULL;
+    Py_INCREF(&DataStoreServerType);
+    PyModule_AddObject(module, "DataStoreServer", (PyObject *)&DataStoreServerType);
+
+    if (PyType_Ready(&DataStoreClientType) < 0) return NULL;
+    Py_INCREF(&DataStoreClientType);
+    PyModule_AddObject(module, "DataStoreClient", (PyObject *)&DataStoreClientType);
     return module;
 }

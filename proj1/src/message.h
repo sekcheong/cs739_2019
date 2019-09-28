@@ -2,7 +2,6 @@
 #define MESSAGE_H
 
 #include "lib739kv.h"
-
 #include <chrono>
 #include <cstdint>
 #include <cctype>
@@ -10,16 +9,17 @@
 
 #define MSG_SIZE 4096
 
+
 enum class command: int32_t
 {
 	NONE = 0,
-	CHK,
-	OK,
-	GET,
-	PUT,
-	NO_VAL,
-	ERROR,
-	SHUT_DOWN
+	OK = 1,
+	CHK = 2,
+	GET = 3,
+	PUT = 4,
+	NO_VAL = 5,
+	ERROR = -1,
+	SHUT_DOWN = 999
 };
 
 

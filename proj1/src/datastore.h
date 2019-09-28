@@ -12,7 +12,6 @@
 #include "sqlstatement.h"
 
 
-
 class data_store {
 public:
 	data_store();

@@ -82,8 +82,7 @@ static PyMethodDef module_methods[] = {
 
 
 typedef struct {
-    PyObject_HEAD    
-    PyObject *frame_callback;
+    PyObject_HEAD 
     data_store *store_p;
 } DataStore;
 
@@ -224,25 +223,45 @@ static PyTypeObject DataStoreType = {
 
 typedef struct {
     PyObject_HEAD    
-    PyObject *frame_callback;
+    server *server_p;
+    PyObject *message_callback;
 } DataStoreServer;
-
-
-static PyMethodDef DataStoreServer_methods[] = {    
-    
-    {NULL, NULL, 0, NULL}
-};
 
 
 static PyObject *DataStoreServer_new(PyTypeObject *type, PyObject *args, PyObject *kwds);
 static int DataStoreServer_init(DataStoreServer *self, PyObject *args, PyObject *kwds);
 static void DataStoreServer_dealloc(DataStoreServer* self);
+static PyObject* DataStoreServer_serve(DataStoreServer *self, PyObject *args);
+static PyObject* DataStoreServer_stop(DataStoreServer *self, PyObject *args);
+static PyObject* DataStoreServer_running(DataStoreServer *self, PyObject *args);
+
+static PyMethodDef DataStoreServer_methods[] = {    
+    {   
+        "serve", 
+        (PyCFunction) DataStoreServer_serve, 
+        METH_NOARGS,
+        "Starting serving clients"
+    },
+    {   
+        "stop", 
+        (PyCFunction) DataStoreServer_stop, 
+        METH_NOARGS,
+        "Stop serving and shutdown"
+    },
+    {   
+        "running", 
+        (PyCFunction) DataStoreServer_running, 
+        METH_NOARGS,
+        "Returns true if the server is running"
+    }, 
+    {NULL, NULL, 0, NULL}
+};
 
 static PyTypeObject DataStoreServerType = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "kvs.DataStoreServer",            /* tp_name */
-    sizeof(DataStoreServer),          /* tp_basicsize */
-    0,                                /* tp_itemsize */
+    "kvs.DataStoreServer",                  /* tp_name */
+    sizeof(DataStoreServer),                /* tp_basicsize */
+    0,                                      /* tp_itemsize */
     (destructor)DataStoreServer_dealloc,    /* tp_dealloc */
     0,                          /* tp_print */
     0,                          /* tp_getattr */
@@ -284,12 +303,13 @@ static PyTypeObject DataStoreServerType = {
 
 typedef struct {
     PyObject_HEAD    
+    client *client_p;
     PyObject *frame_callback;
 } DataStoreClient;
 
 
 static PyMethodDef DataStoreClient_methods[] = {    
-    
+
     {NULL, NULL, 0, NULL}
 };
 

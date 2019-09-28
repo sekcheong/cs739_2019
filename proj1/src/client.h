@@ -21,9 +21,15 @@ public:
 	virtual ~client();
 	void send_message(const message &msg, message &response);
 	bool get(const char *key, char *value, int64_t *timestamp);
-	bool put(const char *key, const char *value, char *ov, int64_t *timestamp);
-	bool get(std::string &key, std::vector<char> &value, int64_t &timestamp);	
-	bool put(std::string &key, std::vector<char> &newvalue, std::vector<char> &oldvalue, int64_t &timestamp);
+	bool put(const char *key, const char *value, int64_t timestamp);
+	bool put(const char *key, const char *value) {
+		return put(key, value, 0);		
+	}
+	bool get_meta(const char *key, char *value, int *len);
+	void put_meta(const char *key, const char *value);
+	int64_t get_last_timestamp();
+	int64_t get_first_timestamp();
+	int64_t get_timestamp(const char *key);	
 private:
 	std::string host_;
 	int port_;	

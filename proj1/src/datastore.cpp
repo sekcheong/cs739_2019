@@ -39,13 +39,6 @@ data_store::data_store(const char *filename) {
  		throw exception("Error creating the date_store table", ret);
  	}
 
-	// //create create the write log
- // 	const char *sql2 = "CREATE TABLE IF NOT EXISTS data_store_log (csn INTEGER PRIMARY KEY DESC, key TEXT, value BLOB, timestamp INTEGER);";
- // 	ret = sqlite3_exec(db_, sql2, 0, 0, 0);
- // 	if (ret!=SQLITE_OK) {
- // 		throw exception("Error creating the date_store_log table", ret);
- // 	}
-
 	//create create the metadata table
 	const char *sql3 = "CREATE TABLE IF NOT EXISTS data_store_meta (key TEXT PRIMARY KEY, value TEXT);";
  	ret = sqlite3_exec(db_, sql3, 0, 0, 0);

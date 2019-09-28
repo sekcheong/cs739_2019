@@ -26,7 +26,6 @@ server::~server() {
 		delete ds_;
 		ds_ = nullptr;
 	}
-
 	DEBUG_PRINT("server::~server() [end]");
 }
 
@@ -113,9 +112,9 @@ void server::message_handler() {
 					
 				case command::CHK: {
 						DEBUG_PRINT("server::message_handler(): key=%s", msg.key());
-						msg.clear();
-						msg.set_command(command::OK);
-						send(sockfd, (void *) &msg, sizeof(message), 0);
+						res.clear();
+						res.set_command(command::OK);
+						send(sockfd, (void *) &res, sizeof(message), 0);
 					}
 					break;
 
@@ -146,7 +145,6 @@ void server::message_handler() {
 						}
 						send(sockfd, (void *) &res, sizeof(message), 0);
 					}
-
 					break;
 
     			case command::PUT: {
@@ -175,7 +173,6 @@ void server::message_handler() {
 
 						send(sockfd, (void *) &res, sizeof(message), 0);
 					}
-
 					break;
 
     			case command::SHUT_DOWN: {
@@ -247,8 +244,7 @@ bool server::is_running() {
 // 	shmdt(str); 
 
 // 	return 0; 
-// } 
-
+// }
 
 
 // #include <iostream> 

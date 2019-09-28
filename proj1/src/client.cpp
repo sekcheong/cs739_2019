@@ -59,13 +59,19 @@ bool client::get(const char *key, char *value, int64_t *timestamp) {
 
 	try {
 		message res;
+
 		message msg(command::PUT);
 		msg.set_key(key);
 		
 		send_message(msg, res);
-		
+
 		//if key not found
 		if (msg.get_command()==command::NO_VAL) {
+			DEBUG_PRINT("client::get() the key doesn't exist");
+			return false;
+		}
+		else if (msg.get_command()!=command::OK) {
+			DEBUG_PRINT("client::get() request failed!");
 			return false;
 		}
 
@@ -83,33 +89,29 @@ bool client::get(const char *key, char *value, int64_t *timestamp) {
 	DEBUG_PRINT("client::get() [end]");
 }
 
-
-bool client::put(const char *key, const char *value,  char *ov, int64_t *timestamp) {
+	 
+bool client::put(const char *key, const char *value, int64_t timestamp) {
 	DEBUG_PRINT("client::put() [begin]");
 	
 	try {
 		message res;
+
 		message msg(command::PUT);
 		msg.set_key(key);
 		msg.set_value(value, strlen(value));
+		msg.set_value_timestamp(timestamp);
 
 		send_message(msg, res);
-
-		//request failed
-		if (res.get_command()==command::OK) {
+		if (res.get_command()!=command::OK) {
+			DEBUG_PRINT("client::put() request failed!");
 			return false;
 		}
-
-		*timestamp = res.get_value_timestamp();
-		memcpy((void*)ov, res.value(), res.get_value_size());
-		
+		return true;
 	}
 	catch (exception &ex) {
 		DEBUG_PRINT("client::put() ERROR: %s", ex.what());
 		return false;
 	}
-
-	return false;
 
 	DEBUG_PRINT("client::put() [end]");
 }
