@@ -9,29 +9,29 @@ VPATH=./src/:./testing
 OBJDIR=./obj/
 
 
-CC=gcc 
+CC=gcc
 
-CPP=g++ -std=c++11 
+CPP=g++ -std=c++11
 
-OPTS=-Ofast 
+OPTS=-Ofast
 
-LDFLAGS= -lm -pthread -ldl 
+LDFLAGS= -lm -pthread -ldl
 
 COMMON= -Iinclude/ -Isrc/
 
-CFLAGS=-Wall -Wno-unused-result -Wno-unknown-pragmas -Wfatal-errors -fPIC 
+CFLAGS=-Wall -Wno-unused-result -Wno-unknown-pragmas -Wfatal-errors -fPIC
 
-CFLAGS_PYTHON = `pkg-config --cflags python3` 
+CFLAGS_PYTHON = `pkg-config --cflags python3`
 
 LDFLAGS_PYTHON = `pkg-config --libs python3`
 
-ifeq ($(DEBUG), 1) 
+ifeq ($(DEBUG), 1)
 	OPTS=-O0 -g
 endif
 
 #for MacOS clang we need to add libc++
 ifeq ($(UNAME),Darwin)
-	CPP += -stdlib=libc++ 
+	CPP += -stdlib=libc++
 endif
 
 
@@ -48,7 +48,7 @@ OBJ=	sqlite3.o \
 		client.o \
 		lib739kv.o \
 
-#list of executable to build  
+#list of executable to build
 EXEC =  kvdaemon \
 		kvservice \
 		test \
@@ -65,7 +65,7 @@ DEPS = $(wildcard src/*.h) Makefile include/lib739kv.h
 
 TESTFILES = test*.db
 
-all: obj $(SLIB) $(EXECOBJ) $(EXEC) python_binding
+all: obj $(SLIB) $(EXECOBJ) $(EXEC) python_binding TAGS
 
 $(SLIB): $(OBJS)
 	$(CPP) $(CFLAGS) -shared $^ -o $@ $(LDFLAGS)
@@ -75,16 +75,19 @@ $(OBJDIR)%.o: %.cpp $(DEPS)
 
 $(OBJDIR)%.o: %.c $(DEPS)
 	$(CC) $(COMMON) $(CFLAGS) -c $< -o $@
-	
+
 $(EXEC): $(EXECOBJ) $(SLIB)
 	$(CPP) $(COMMON) $(CFLAGS) $(OBJDIR)$@.o -o $@ $(LDFLAGS) $(SLIB)
 
 kvs739.o: kvs739.cpp $(DEPS)
-	$(CPP) $(COMMON) $(CFLAGS) $(CFLAGS_PYTHON) -c $< -o $(addprefix $(OBJDIR), $@)	
+	$(CPP) $(COMMON) $(CFLAGS) $(CFLAGS_PYTHON) -c $< -o $(addprefix $(OBJDIR), $@)
 
-python_binding: $(SLIB) kvs739.o 
+python_binding: $(SLIB) kvs739.o
 	$(CPP) -shared $(addprefix $(OBJDIR), kvs739.o)	$(LDFLAGS) $(SLIB) $(LDFLAGS_PYTHON) -o kvs.so
 	cp *.so ./testing
+
+TAGS: $(wildcard src/*.h) $(wildcard src/*.cpp) $(wildcard testing/*.h) $(wildcard testing/*.cpp) Makefile include/lib739kv.h
+	-find . -type f -iname "*.[chS]p?" | xargs etags -a
 
 obj:
 	mkdir -p obj
