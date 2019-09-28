@@ -20,10 +20,10 @@ public:
 	client(const std::string &host, int port);
 	virtual ~client();
 	void send_message(const message &msg, message &response);
-	bool get(const char *key, char *value, int64_t *timestamp);
-	bool put(const char *key, const char *value, int64_t timestamp);
-	bool put(const char *key, const char *value) {
-		return put(key, value, 0);		
+	bool get(const char *key, char *value, int *len, int64_t *timestamp);
+	bool put(const char *key, const char *value, int len, int64_t timestamp);
+	bool put(const char *key, const char *value, int len) {
+		return put(key, value, len, 0);
 	}
 	bool get_meta(const char *key, char *value, int *len);
 	void put_meta(const char *key, const char *value);

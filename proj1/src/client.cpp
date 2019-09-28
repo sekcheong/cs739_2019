@@ -54,7 +54,7 @@ void client::send_message(const message &msg, message &response) {
 }
 
 
-bool client::get(const char *key, char *value, int64_t *timestamp) {
+bool client::get(const char *key, char *value, int *len, int64_t *timestamp) {
 	DEBUG_PRINT("client::get() [begin]");
 
 	try {
@@ -76,6 +76,10 @@ bool client::get(const char *key, char *value, int64_t *timestamp) {
 		}
 
 		//return the key value
+		if (*len<res.get_value_size()) {
+			throw exception("client::get() Invalid buffer size");
+		}
+
 		*timestamp = res.get_value_timestamp();
 		memcpy(value, res.value(), res.get_value_size());
 		return true;
@@ -90,7 +94,7 @@ bool client::get(const char *key, char *value, int64_t *timestamp) {
 }
 
 	 
-bool client::put(const char *key, const char *value, int64_t timestamp) {
+bool client::put(const char *key, const char *value, int len, int64_t timestamp) {
 	DEBUG_PRINT("client::put() [begin]");
 	
 	try {
@@ -98,7 +102,7 @@ bool client::put(const char *key, const char *value, int64_t timestamp) {
 
 		message msg(command::PUT);
 		msg.set_key(key);
-		msg.set_value(value, strlen(value));
+		msg.set_value(value, len);
 		msg.set_value_timestamp(timestamp);
 
 		send_message(msg, res);
@@ -114,4 +118,14 @@ bool client::put(const char *key, const char *value, int64_t timestamp) {
 	}
 
 	DEBUG_PRINT("client::put() [end]");
+}
+
+
+bool client::get_meta(const char *key, char *value, int *len) {
+	return false;
+}
+
+
+void client::put_meta(const char *key, const char *value) {
+
 }

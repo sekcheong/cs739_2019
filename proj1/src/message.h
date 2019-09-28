@@ -18,8 +18,10 @@ enum class command: int32_t
 	GET = 3,
 	PUT = 4,
 	NO_VAL = 5,
+	GET_META = 10,
+	PUT_META = 10,
+	SHUT_DOWN = 999,
 	ERROR = -1,
-	SHUT_DOWN = 999
 };
 
 

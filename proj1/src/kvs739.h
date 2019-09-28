@@ -308,15 +308,69 @@ typedef struct {
 } DataStoreClient;
 
 
-static PyMethodDef DataStoreClient_methods[] = {    
-
-    {NULL, NULL, 0, NULL}
-};
-
-
 static PyObject *DataStoreClient_new(PyTypeObject *type, PyObject *args, PyObject *kwds);
 static int DataStoreClient_init(DataStoreClient *self, PyObject *args, PyObject *kwds);
 static void DataStoreClient_dealloc(DataStoreClient* self);
+static PyObject* DataStoreClient_get(DataStoreClient *self, PyObject *args);
+static PyObject* DataStoreClient_put(DataStoreClient *self, PyObject *args);
+static PyObject* DataStoreClient_get_meta(DataStoreClient *self, PyObject *args);
+static PyObject* DataStoreClient_put_meta(DataStoreClient *self, PyObject *args);
+static PyObject* DataStoreClient_last_timestamp(DataStoreClient *self, PyObject *args);
+static PyObject* DataStoreClient_first_timestamp(DataStoreClient *self, PyObject *args);
+static PyObject* DataStoreClient_timestamp(DataStoreClient *self, PyObject *args);
+
+
+static PyMethodDef DataStoreClient_methods[] = {    
+    {   
+        "get", 
+        (PyCFunction) DataStoreClient_get, 
+        METH_VARARGS,
+        "Retrieve the (value, timestamp) tuple corresponding to the key. If the key does not exist an exception will be thrown."
+    }, 
+    
+    {   
+        "put", 
+        (PyCFunction) DataStoreClient_put, 
+        METH_VARARGS,
+        "Perform a get operation on the current value into and then store the specified value. "
+    }, 
+    {   
+        "get_meta", 
+        (PyCFunction) DataStoreClient_get_meta, 
+        METH_VARARGS,
+        "Retrive a metadata of a corresponding key. If the key does not exist an exception will be thrown."
+    }, 
+    
+    {   
+        "put_meta", 
+        (PyCFunction) DataStoreClient_put_meta, 
+        METH_VARARGS,
+        "Set the metadata value of a corresponding key."
+    }, 
+    
+    {   
+        "timestamp", 
+        (PyCFunction) DataStoreClient_timestamp, 
+        METH_VARARGS,
+        "Get the timestamp of a key. If the key doesn't exit it returns -1."
+    }, 
+
+    {   
+        "last_timestamp", 
+        (PyCFunction) DataStoreClient_last_timestamp, 
+        METH_VARARGS,
+        "Get the latest timestamp value."
+    }, 
+
+    {   
+        "first_timestamp", 
+        (PyCFunction) DataStoreClient_first_timestamp, 
+        METH_VARARGS,
+        "Set the oldest timtstamp value."
+    }, 
+    {NULL, NULL, 0, NULL}
+};
+
 
 static PyTypeObject DataStoreClientType = {
     PyVarObject_HEAD_INIT(NULL, 0)

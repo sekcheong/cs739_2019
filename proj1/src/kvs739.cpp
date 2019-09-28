@@ -100,6 +100,12 @@ static PyObject* kvs_timestamp(PyObject *self, PyObject *args) {
 	return Py_BuildValue("L", ts);
 }
 
+
+static int DataStore_init(DataStore *self, PyObject *args, PyObject *kwds) {
+	return 0;
+}
+
+
 static PyObject *DataStore_new(PyTypeObject *type, PyObject *args, PyObject *kwds) {
 	DEBUG_PRINT("DataStore_new() [begin]");
     DataStore *self;
@@ -133,11 +139,6 @@ static PyObject *DataStore_new(PyTypeObject *type, PyObject *args, PyObject *kwd
 }
 
 
-static int DataStore_init(DataStore *self, PyObject *args, PyObject *kwds) {
-	return 0;
-}
-
-
 static void DataStore_dealloc(DataStore* self) {
  	DEBUG_PRINT("DataStore_dealloc() [begin]");
     if (self->store_p!=nullptr) {
@@ -157,9 +158,7 @@ static void DataStore_dealloc(DataStore* self) {
 
 static PyObject* DataStore_get(DataStore *self, PyObject *args) {
 	char* key;
-   
 	auto argc = PyTuple_Size(args);   
-
     if ((argc!=1)  || !PyArg_ParseTuple(args, "s", &key)) {
 		PyErr_SetString(PyExc_RuntimeError, "Invalid parameters"); 
 		return NULL;
@@ -170,7 +169,7 @@ static PyObject* DataStore_get(DataStore *self, PyObject *args) {
 	int len = MAX_VALUE_SIZE-1;
 	
 	try {
-		data_store *ds = self->store_p;
+		auto *ds = self->store_p;
 		if (ds->get(key, buffer, &len,  &ts)==1) {
 			buffer[len]=0;
 			return Py_BuildValue("(sL)", buffer, ts);
@@ -182,6 +181,7 @@ static PyObject* DataStore_get(DataStore *self, PyObject *args) {
 	}
 	catch (exception &ex) {
 		PyErr_SetString(PyExc_RuntimeError, ex.what());
+		return NULL;
 	}
 
     Py_RETURN_NONE;
@@ -442,19 +442,182 @@ static PyObject* DataStoreServer_running(DataStoreServer *self, PyObject *args) 
 }
 
 
-static PyObject *DataStoreClient_new(PyTypeObject *type, PyObject *args, PyObject *kwds) {
-
-	Py_RETURN_NONE;
-}
-
-
 static int DataStoreClient_init(DataStoreClient *self, PyObject *args, PyObject *kwds) {
 	return 0;
 }
 
 
-static void DataStoreClient_dealloc(DataStoreClient* self) {
+static PyObject *DataStoreClient_new(PyTypeObject *type, PyObject *args, PyObject *kwds) {
+	DEBUG_PRINT("DataStoreClient_new() [begin]");
+    DataStoreClient *self;
 
+    self = (DataStoreClient*)type->tp_alloc(type, 0);
+    
+    if (self == NULL) {      
+        PyErr_SetString(PyExc_RuntimeError, "Error allocating DataStore object");
+        return NULL;
+    }
+
+    //try to create the camera either by index or info 
+    try {
+    	char* host;
+    	int port;
+		auto argc = PyTuple_Size(args);   	
+    	if ((argc!=2) || !PyArg_ParseTuple(args, "si", &host, &port)) {
+    		PyErr_SetString(PyExc_RuntimeError, "Invalid parameters");
+    		return NULL;
+    	}
+    	self->client_p = new client(host, port);
+    }
+    catch (exception &ex) {        
+        PyErr_SetString(PyExc_RuntimeError, "Error creating DataStoreClient.");
+        return NULL;
+    }
+
+    DEBUG_PRINT("DataStoreClient_new() [end]");
+    return (PyObject *)self;
+}
+
+
+static void DataStoreClient_dealloc(DataStoreClient* self) {
+ 	DEBUG_PRINT("DataStoreClient_dealloc() [begin]");
+    if (self->client_p!=nullptr) {
+        try {
+            delete self->client_p;       
+            self->client_p = nullptr;
+        }
+        catch (exception &ex) {
+            PyErr_SetString(PyExc_RuntimeError, "Error deallocating DataStoreClient.");
+            return;
+        }
+    }
+    Py_TYPE(self)->tp_free((PyObject*)self);
+    DEBUG_PRINT("DataStoreClient_dealloc() [end]");    
+}
+
+
+static PyObject* DataStoreClient_get(DataStoreClient *self, PyObject *args) {
+	char* key;
+
+	auto argc = PyTuple_Size(args);   
+    if ((argc!=1)  || !PyArg_ParseTuple(args, "s", &key)) {
+		PyErr_SetString(PyExc_RuntimeError, "Invalid parameters"); 
+		return NULL;
+    }
+
+	char buffer[MAX_VALUE_SIZE] = {0};
+	int64_t ts = 0;
+	int len = MAX_VALUE_SIZE-1;
+	
+	try {
+		auto *c = self->client_p;
+		if (c->get(key, buffer, &len,  &ts)) {
+			buffer[len]=0;
+			return Py_BuildValue("(sL)", buffer, ts);
+		}
+		else {
+			PyErr_SetString(PyExc_RuntimeError, "key doesn't exist");
+			return NULL;
+		}
+	}
+	catch (exception &ex) {
+		PyErr_SetString(PyExc_RuntimeError, ex.what());
+		return NULL;
+	}
+
+    Py_RETURN_NONE;
+}
+
+
+static PyObject* DataStoreClient_put(DataStoreClient *self, PyObject *args) {
+	char* key;
+	char* value;
+	int64_t ts = 0;
+
+	auto argc = PyTuple_Size(args);   
+
+	if (argc<2) {
+		PyErr_SetString(PyExc_RuntimeError, "Insufficient number of arguments"); 
+		return NULL;
+	}
+
+
+	if (PyArg_ParseTuple(args, "ssL", &key, &value, &ts)) {
+	 	//we have key, value, and time stamp
+	}
+	else {
+		PyErr_Clear();
+		ts = 0;
+		if (!PyArg_ParseTuple(args, "ss", &key, &value)) {
+			PyErr_SetString(PyExc_RuntimeError, "Invalid parameters"); 
+			return NULL;
+		}
+	}
+
+	try {
+		auto *c = self->client_p;
+		if (c->put(key, value, strlen(value), ts)) {		
+			Py_RETURN_NONE;
+		}
+		else {
+			PyErr_SetString(PyExc_RuntimeError, "put value failed");
+			return NULL;
+		}
+	}
+	catch (exception &ex) {
+		PyErr_SetString(PyExc_RuntimeError, ex.what());
+		return NULL;
+	}
+
+}
+
+
+static PyObject* DataStoreClient_get_meta(DataStoreClient *self, PyObject *args) {
+	char* key;
+	char value[MAX_VALUE_SIZE];
+	int len = MAX_VALUE_SIZE - 1;
+
+	if (PyTuple_Size(args)!=1|| !PyArg_ParseTuple(args, "s", &key, &value)) {
+		PyErr_SetString(PyExc_RuntimeError, "Invalid parameters"); 
+		return NULL;
+	}
+
+	try {
+		auto *c = self->client_p;
+		if (c->get_meta(key, value, &len)) {
+			return Py_BuildValue("s", value);
+		}
+		else {
+			PyErr_SetString(PyExc_RuntimeError, "key does not exit");
+			return NULL;
+		}
+	}
+	catch (exception &ex)  {
+		PyErr_SetString(PyExc_RuntimeError, ex.what());
+		return NULL;
+	}
+
+	Py_RETURN_NONE;
+}
+
+
+static PyObject* DataStoreClient_put_meta(DataStoreClient *self, PyObject *args) {
+	Py_RETURN_NONE;
+}
+
+
+static PyObject* DataStoreClient_last_timestamp(DataStoreClient *self, PyObject *args) {
+	Py_RETURN_NONE;
+}
+
+
+static PyObject* DataStoreClient_first_timestamp(DataStoreClient *self, PyObject *args) {
+	Py_RETURN_NONE;
+}
+
+
+static PyObject* DataStoreClient_timestamp(DataStoreClient *self, PyObject *args) {
+	Py_RETURN_NONE;	
 }
 
 
