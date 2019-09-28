@@ -2,6 +2,12 @@
 
 CS737 Distributed Systems Fall 2019
 
+# Dependencies
+
+Install the dependencies with:
+
+    apt-get python3-dev libpython3-cxx sqlite-dev
+
 # Design
 
 These are components we do or may need:
