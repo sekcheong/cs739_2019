@@ -57,64 +57,49 @@ void client::send_message(const message &msg, message &response) {
 bool client::get(const char *key, char *value, int *len, int64_t *timestamp) {
 	DEBUG_PRINT("client::get() [begin]");
 
-	try {
-		message res;
+	message res;
 
-		message msg(command::PUT);
-		msg.set_key(key);
-		
-		send_message(msg, res);
+	message msg(command::GET);
+	msg.set_key(key);
+	
+	send_message(msg, res);
 
-		//if key not found
-		if (msg.get_command()==command::NO_VAL) {
-			DEBUG_PRINT("client::get() the key doesn't exist");
-			return false;
-		}
-		else if (msg.get_command()!=command::OK) {
-			DEBUG_PRINT("client::get() request failed!");
-			return false;
-		}
-
-		//return the key value
-		if (*len<res.get_value_size()) {
-			throw exception("client::get() Invalid buffer size");
-		}
-
-		*timestamp = res.get_value_timestamp();
-		memcpy(value, res.value(), res.get_value_size());
-		return true;
-	}
-	catch (exception &ex) {
-		DEBUG_PRINT("client::get() ERROR: %s", ex.what());
+	//if key not found
+	if (res.get_command()==command::NO_VAL) {
+		DEBUG_PRINT("client::get() the key doesn't exist");
 		return false;
 	}
-	return false;
+	else if (res.get_command()!=command::OK) {
+		throw exception("client::get() request failed!");
+	}
+
+	//return the key value
+	if (*len<res.get_value_size()) {
+		throw exception("client::get() Invalid buffer size");
+	}
+
+	*timestamp = res.get_value_timestamp();
+	memcpy(value, res.value(), res.get_value_size());
 
 	DEBUG_PRINT("client::get() [end]");
+
+	return true;
 }
 
 	 
-bool client::put(const char *key, const char *value, int len, int64_t timestamp) {
+void client::put(const char *key, const char *value, int len, int64_t timestamp) {
 	DEBUG_PRINT("client::put() [begin]");
-	
-	try {
-		message res;
 
-		message msg(command::PUT);
-		msg.set_key(key);
-		msg.set_value(value, len);
-		msg.set_value_timestamp(timestamp);
+	message res;
 
-		send_message(msg, res);
-		if (res.get_command()!=command::OK) {
-			DEBUG_PRINT("client::put() request failed!");
-			return false;
-		}
-		return true;
-	}
-	catch (exception &ex) {
-		DEBUG_PRINT("client::put() ERROR: %s", ex.what());
-		return false;
+	message msg(command::PUT);
+	msg.set_key(key);
+	msg.set_value(value, len);
+	msg.set_value_timestamp(timestamp);
+
+	send_message(msg, res);
+	if (res.get_command()!=command::OK) {
+		throw exception("client::put() request failed!");
 	}
 
 	DEBUG_PRINT("client::put() [end]");
@@ -122,10 +107,106 @@ bool client::put(const char *key, const char *value, int len, int64_t timestamp)
 
 
 bool client::get_meta(const char *key, char *value, int *len) {
-	return false;
+	DEBUG_PRINT("client::get_meta() [begin]");
+
+	message res;
+
+	message msg(command::GET_META);
+	msg.set_key(key);
+	
+	send_message(msg, res);
+
+	//if key not found
+	if (res.get_command()==command::NO_VAL) {
+		throw exception("client::get_meta() the key doesn't exist");
+	}
+	else if (res.get_command()!=command::OK) {
+		throw exception("client::get_meta() request failed!");
+	}
+
+	//return the key value
+	if (*len<res.get_value_size()) {
+		throw exception("client::get_meta() Invalid buffer size");
+	}
+
+	memcpy(value, res.value(), res.get_value_size());
+
+	DEBUG_PRINT("client::get_meta() [end]");
+
+	return true;
 }
 
 
 void client::put_meta(const char *key, const char *value) {
+	DEBUG_PRINT("client::put_meta() [begin]");
 
+	message res;
+
+	message msg(command::PUT_META);
+	msg.set_key(key);
+	int len = strlen(value);
+	msg.set_value(value, len);
+	msg.set_value_timestamp(0);
+
+	send_message(msg, res);
+	if (res.get_command()!=command::OK) {
+		throw exception("client::put_meta() Invalid buffer size");
+	}
+
+	DEBUG_PRINT("client::put_meta() [end]");
+}
+
+
+int64_t client::get_last_timestamp()  {
+	DEBUG_PRINT("client::get_last_timestamp() [begin]");
+	message res;
+	message msg(command::GET_LAST_TS);
+	send_message(msg, res);
+
+	if (res.get_command()!=command::OK) {
+		throw exception("client::get_last_timestamp() request failed");
+	}
+	return res.get_value_timestamp();
+	DEBUG_PRINT("client::get_last_timestamp() [end]");
+}
+
+
+int64_t client::get_first_timestamp() {
+	DEBUG_PRINT("client::get_first_timestamp() [begin]");
+	message res;
+	message msg(command::GET_FIRST_TS);
+	send_message(msg, res);
+
+	if (res.get_command()!=command::OK) {
+		throw exception("client::get_first_timestamp() request failed!");
+	}
+	return res.get_value_timestamp();
+	DEBUG_PRINT("client::get_first_timestamp() [end]");
+}
+
+
+int64_t client::get_timestamp(const char *key) {
+	DEBUG_PRINT("client::get_timestamp() [begin]");
+	message res;
+	message msg(command::GET_TS);
+	msg.set_key(key);
+	send_message(msg, res);
+
+	if (res.get_command()!=command::OK) {
+		throw exception("client::get_timestamp() request failed!");
+	}
+	return res.get_value_timestamp();
+	DEBUG_PRINT("client::get_timestamp() [end]");
+}
+
+
+void client::shutdown_server() {
+	DEBUG_PRINT("client::shutdown_server() [begin]");
+	message res;
+	message msg(command::SHUT_DOWN);
+	send_message(msg, res);
+	if (res.get_command()!=command::OK) {
+		throw exception("client::shutdown_server() request failed!");
+	}
+	DEBUG_PRINT("client::shutdown_server() [end]");
 }

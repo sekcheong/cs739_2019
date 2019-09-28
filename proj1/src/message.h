@@ -19,7 +19,10 @@ enum class command: int32_t
 	PUT = 4,
 	NO_VAL = 5,
 	GET_META = 10,
-	PUT_META = 10,
+	PUT_META = 11,
+	GET_TS = 20,
+	GET_LAST_TS = 25,
+	GET_FIRST_TS = 26,
 	SHUT_DOWN = 999,
 	ERROR = -1,
 };

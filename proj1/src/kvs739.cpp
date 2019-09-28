@@ -556,13 +556,8 @@ static PyObject* DataStoreClient_put(DataStoreClient *self, PyObject *args) {
 
 	try {
 		auto *c = self->client_p;
-		if (c->put(key, value, strlen(value), ts)) {		
-			Py_RETURN_NONE;
-		}
-		else {
-			PyErr_SetString(PyExc_RuntimeError, "put value failed");
-			return NULL;
-		}
+		c->put(key, value, strlen(value), ts);		
+		Py_RETURN_NONE;
 	}
 	catch (exception &ex) {
 		PyErr_SetString(PyExc_RuntimeError, ex.what());
@@ -602,22 +597,97 @@ static PyObject* DataStoreClient_get_meta(DataStoreClient *self, PyObject *args)
 
 
 static PyObject* DataStoreClient_put_meta(DataStoreClient *self, PyObject *args) {
-	Py_RETURN_NONE;
+	char* key;
+	char* value;
+
+	if (PyTuple_Size(args)!=2|| !PyArg_ParseTuple(args, "ss", &key, &value)) {
+		PyErr_SetString(PyExc_RuntimeError, "Invalid parameters"); 
+		return NULL;
+	}
+
+	try {
+		auto *c = self->client_p;
+		c->put_meta(key, value);
+		Py_RETURN_NONE;
+	}
+	catch (exception &ex)  {
+		PyErr_SetString(PyExc_RuntimeError, ex.what());
+		return NULL;
+	}
 }
 
 
 static PyObject* DataStoreClient_last_timestamp(DataStoreClient *self, PyObject *args) {
-	Py_RETURN_NONE;
+	if (PyTuple_Size(args)!=0) {
+		PyErr_SetString(PyExc_RuntimeError, "Invalid parameters"); 
+		return NULL;
+	}
+
+	try {
+		auto *c = self->client_p;
+		int64_t ts = c->get_last_timestamp();
+		return Py_BuildValue("L", ts);
+	}
+	catch (exception &ex) {
+		PyErr_SetString(PyExc_RuntimeError, ex.what());
+		return NULL;
+	};
 }
 
 
 static PyObject* DataStoreClient_first_timestamp(DataStoreClient *self, PyObject *args) {
-	Py_RETURN_NONE;
+	if (PyTuple_Size(args)!=0) {
+		PyErr_SetString(PyExc_RuntimeError, "Invalid parameters"); 
+		return NULL;
+	}
+
+	try {
+		auto *c = self->client_p;
+		int64_t ts = c->get_first_timestamp();
+		return Py_BuildValue("L", ts);
+	}
+	catch (exception &ex) {
+		PyErr_SetString(PyExc_RuntimeError, ex.what());
+		return NULL;
+	}
 }
 
 
 static PyObject* DataStoreClient_timestamp(DataStoreClient *self, PyObject *args) {
-	Py_RETURN_NONE;	
+	char* key;
+
+	if (PyTuple_Size(args)!=1 || !PyArg_ParseTuple(args, "s", &key)) {
+		PyErr_SetString(PyExc_RuntimeError, "Invalid parameters"); 
+		return NULL;
+	}
+
+	try {
+		auto *c = self->client_p;
+		int64_t ts = c->get_timestamp(key);
+		return Py_BuildValue("L", ts);
+	}
+	catch (exception &ex) {
+		PyErr_SetString(PyExc_RuntimeError, ex.what());
+		return NULL;
+	}
+}
+
+static PyObject* DataStoreClient_shutdown_server(DataStoreClient *self, PyObject *args) {
+	
+	if (PyTuple_Size(args)!=0) {
+		PyErr_SetString(PyExc_RuntimeError, "Invalid parameters"); 
+		return NULL;
+	}
+
+	try {
+		auto *c = self->client_p;
+		c->shutdown_server();
+		Py_RETURN_NONE;		
+	}
+	catch (exception &ex) {
+		PyErr_SetString(PyExc_RuntimeError, ex.what());
+		return NULL;
+	}
 }
 
 

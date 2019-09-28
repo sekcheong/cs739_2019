@@ -98,6 +98,7 @@ static PyObject* DataStore_timestamp(DataStore *self, PyObject *args);
 static PyObject* DataStore_last_timestamp(DataStore *self, PyObject *args);
 static PyObject* DataStore_first_timestamp(DataStore *self, PyObject *args);
 
+
 static PyMethodDef DataStore_methods[] = {    
     {   
         "get", 
@@ -318,6 +319,7 @@ static PyObject* DataStoreClient_put_meta(DataStoreClient *self, PyObject *args)
 static PyObject* DataStoreClient_last_timestamp(DataStoreClient *self, PyObject *args);
 static PyObject* DataStoreClient_first_timestamp(DataStoreClient *self, PyObject *args);
 static PyObject* DataStoreClient_timestamp(DataStoreClient *self, PyObject *args);
+static PyObject* DataStoreClient_shutdown_server(DataStoreClient *self, PyObject *args);
 
 
 static PyMethodDef DataStoreClient_methods[] = {    
@@ -368,6 +370,14 @@ static PyMethodDef DataStoreClient_methods[] = {
         METH_VARARGS,
         "Set the oldest timtstamp value."
     }, 
+
+    {   
+        "shutdown_server", 
+        (PyCFunction) DataStoreClient_shutdown_server, 
+        METH_VARARGS,
+        "Set the oldest timtstamp value."
+    }, 
+
     {NULL, NULL, 0, NULL}
 };
 

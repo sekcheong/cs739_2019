@@ -96,10 +96,7 @@ void server::message_handler() {
 			
 			char buff[MAX_VALUE_SIZE];
 			int buff_len = sizeof(buff);	
-			int64_t ts;
-
-			message msg;
-			message res;
+			message msg;		
 
 			int len = sizeof(msg);
 			int n = recv(sockfd, (void *) &msg, len, MSG_WAITALL);
@@ -112,7 +109,7 @@ void server::message_handler() {
 					
 				case command::CHK: {
 						DEBUG_PRINT("server::message_handler(): key=%s", msg.key());
-						res.clear();
+						message res;
 						res.set_command(command::OK);
 						send(sockfd, (void *) &res, sizeof(message), 0);
 					}
@@ -125,16 +122,18 @@ void server::message_handler() {
 
     			case command::GET: {
 						DEBUG_PRINT("server::message_handler(): GET: key=%s", msg.key());
+						message res;
+						int64_t ts = 0;
 						try {
-							res.clear();
-
 							buff_len = sizeof(buff);
 							if (ds_->get(msg.key(), buff, &buff_len, &ts)) {
 								res.set_value(buff, buff_len);
 								res.set_value_timestamp(ts);
 								res.set_command(command::OK);
+								DEBUG_PRINT("server::message_handler(): GET: OK");
 							}
 							else {
+								DEBUG_PRINT("server::message_handler(): GET: NoVal");
 								res.set_command(command::NO_VAL);
 							}
 
@@ -150,8 +149,8 @@ void server::message_handler() {
     			case command::PUT: {
 
 						DEBUG_PRINT("server::message_handler(): PUT: key=%s, value=%s, timestamp=%d", msg.key(), msg.get_value_string().c_str(), msg.get_value_timestamp());
+						message res;
 						try {
-							res.clear();
 							buff_len = sizeof(buff);
 							int64_t ts = msg.get_value_timestamp();
 							if (ds_->put(msg.key(), msg.value(), msg.get_value_size(), ts)) {
@@ -176,17 +175,123 @@ void server::message_handler() {
 					break;
 
     			case command::SHUT_DOWN: {
-    					msg.clear();
+    					message res;
 						msg.set_command(command::OK);
 						send(sockfd, (void *) &msg, sizeof(message), 0);
     					stop();
     				}
 					break;
 
-				default:
-					res.clear();
-					res.set_command(command::OK);
-					send(sockfd, (void *) &res, sizeof(message), 0);
+				case command::GET_META: {
+						DEBUG_PRINT("server::message_handler(): GET_META: key=%s", msg.key());
+						message res;
+						try {
+							buff_len = sizeof(buff);
+							if (ds_->get_meta(msg.key(), buff, &buff_len)) {
+								res.set_value(buff, buff_len);
+								res.set_command(command::OK);
+								DEBUG_PRINT("server::message_handler(): GET_META: OK");
+							}
+							else {
+								DEBUG_PRINT("server::message_handler(): GET_META: NoVal");
+								res.set_command(command::NO_VAL);
+							}
+
+						}
+						catch (exception &ex) {
+							res.set_command(command::ERROR);
+							DEBUG_PRINT("server::message_handler(): GET_META: Error %s", ex.what());
+						}
+						send(sockfd, (void *) &res, sizeof(message), 0);
+					}
+					break;
+
+				case command::PUT_META:{
+						DEBUG_PRINT("server::message_handler(): PUT_META: key=%s, value=%s", msg.key(), msg.get_value_string().c_str());
+						message res;
+						try {
+							buff_len = sizeof(buff);
+							int64_t ts = msg.get_value_timestamp();
+							if (ds_->put_meta(msg.key(), msg.value())) {
+								res.set_value(buff, buff_len);
+								res.set_value_timestamp(ts);
+								res.set_command(command::OK);
+							}
+							else {
+								res.clear();
+								res.set_command(command::ERROR);
+								DEBUG_PRINT("server::message_handler(): PUT_META: Returns FALSE!");
+							}
+						}
+						catch (exception &ex) {
+							res.clear();
+							res.set_command(command::ERROR);
+							DEBUG_PRINT("server::message_handler(): PUT_META: Error %s", ex.what());
+						}
+						send(sockfd, (void *) &res, sizeof(message), 0);
+					}
+					break;
+
+				case command::GET_TS:{
+						DEBUG_PRINT("server::message_handler(): GET_TS");
+						message res;
+						try {
+							buff_len = sizeof(buff);
+							int64_t ts = ds_->get_timestamp(msg.key());
+							res.set_value_timestamp(ts);
+							res.set_command(command::OK);
+						}
+						catch (exception &ex) {
+							res.clear();
+							res.set_command(command::ERROR);
+							DEBUG_PRINT("server::message_handler(): GET_TS: Error %s", ex.what());
+						}
+						send(sockfd, (void *) &res, sizeof(message), 0);
+					}
+					break;
+
+				case command::GET_LAST_TS:{
+						DEBUG_PRINT("server::message_handler(): GET_LAST_TS");
+						message res;
+						try {
+							buff_len = sizeof(buff);
+							int64_t ts = ds_->get_last_timestamp();
+							res.set_value_timestamp(ts);
+							res.set_command(command::OK);
+						}
+						catch (exception &ex) {
+							res.clear();
+							res.set_command(command::ERROR);
+							DEBUG_PRINT("server::message_handler(): GET_LAST_TS: Error %s", ex.what());
+						}
+						send(sockfd, (void *) &res, sizeof(message), 0);
+					}
+					break;
+
+				case command::GET_FIRST_TS:{
+						DEBUG_PRINT("server::message_handler(): GET_FIRST_TS");
+						message res;
+						try {
+							buff_len = sizeof(buff);
+							int64_t ts = ds_->get_first_timestamp();
+							res.set_value_timestamp(ts);
+							res.set_command(command::OK);
+						}
+						catch (exception &ex) {
+							res.clear();
+							res.set_command(command::ERROR);
+							DEBUG_PRINT("server::message_handler(): GET_FIRST_TS: Error %s", ex.what());
+						}
+						send(sockfd, (void *) &res, sizeof(message), 0);
+					}
+					break;
+
+				default: {
+						message res;
+						res.clear();
+						res.set_command(command::OK);
+						send(sockfd, (void *) &res, sizeof(message), 0);
+					}
 					break;
 			}
 		}
