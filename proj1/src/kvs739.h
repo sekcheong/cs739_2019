@@ -375,7 +375,7 @@ static PyMethodDef DataStoreClient_methods[] = {
         "shutdown_server", 
         (PyCFunction) DataStoreClient_shutdown_server, 
         METH_VARARGS,
-        "Set the oldest timtstamp value."
+        "shutdown the remote server."
     }, 
 
     {NULL, NULL, 0, NULL}
