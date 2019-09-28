@@ -57,6 +57,10 @@ void client::send_message(const message &msg, message &response) {
 bool client::get(const char *key, char *value, int *len, int64_t *timestamp) {
 	DEBUG_PRINT("client::get() [begin]");
 
+	if (!data_store::validate_key(key)) {
+		throw exception("client::get() invalid key!");
+	}
+
 	message res;
 
 	message msg(command::GET);
@@ -89,6 +93,14 @@ bool client::get(const char *key, char *value, int *len, int64_t *timestamp) {
 	 
 void client::put(const char *key, const char *value, int len, int64_t timestamp) {
 	DEBUG_PRINT("client::put() [begin]");
+
+	if (!data_store::validate_key(key)) {
+		throw exception("client::put() invalid key!");
+	}
+
+	if (!data_store::validate_value(value, len)) {
+		throw exception("client::put() invalid value!");
+	}
 
 	message res;
 
@@ -129,6 +141,7 @@ bool client::get_meta(const char *key, char *value, int *len) {
 		throw exception("client::get_meta() Invalid buffer size");
 	}
 
+	memset((void*) value, 0, *len);
 	memcpy(value, res.value(), res.get_value_size());
 
 	DEBUG_PRINT("client::get_meta() [end]");
@@ -150,7 +163,7 @@ void client::put_meta(const char *key, const char *value) {
 
 	send_message(msg, res);
 	if (res.get_command()!=command::OK) {
-		throw exception("client::put_meta() Invalid buffer size");
+		throw exception("client::put_meta() request failed");
 	}
 
 	DEBUG_PRINT("client::put_meta() [end]");

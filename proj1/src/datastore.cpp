@@ -189,7 +189,7 @@ bool data_store::put_meta(const char *key, const char *value) {
 	}
 
 	sql_statement stmt(db_);
-	const char *sql = "INSERT INTO data_store_meta VALUES(?, ?)";
+	const char *sql = "REPLACE INTO data_store_meta VALUES(?, ?)";
 	stmt.prepare(sql);
 	stmt.bind_text(1, key);
 	stmt.bind_text(2, value);
