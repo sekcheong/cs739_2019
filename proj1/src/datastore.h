@@ -32,9 +32,9 @@ public:
 
 	virtual int64_t get_timestamp(const char *key);	
 	
-	virtual bool validate_key(const char* key);
+	static bool validate_key(const char* key);
 	
-	virtual bool validate_value(const char *value, int len);
+	static bool validate_value(const char *value, int len);
 
 	virtual bool get(const char *key, char *value, int *len) {
 		int64_t ts;

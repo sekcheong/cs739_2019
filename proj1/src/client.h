@@ -14,6 +14,7 @@
 #include "message.h"
 #include "exception.h"
 #include "debug.h"
+#include "datastore.h"
 
 class client {
 public:
