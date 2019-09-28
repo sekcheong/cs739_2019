@@ -82,10 +82,10 @@ static PyObject *DataStore_new(PyTypeObject *type, PyObject *args, PyObject *kwd
 static int DataStore_init(DataStore *self, PyObject *args, PyObject *kwds);
 static void DataStore_dealloc(DataStore* self);
 static PyObject* DataStore_get(DataStore *self, PyObject *args);
-static PyObject* DataStore_put_private(DataStore *self, char *key, char *value);
 static PyObject* DataStore_put(DataStore *self, PyObject *args);
 static PyObject* DataStore_get_meta(DataStore *self, PyObject *args);
 static PyObject* DataStore_put_meta(DataStore *self, PyObject *args);
+static PyObject* DataStore_timestamp(DataStore *self, PyObject *args);
 static PyObject* DataStore_last_timestamp(DataStore *self, PyObject *args);
 static PyObject* DataStore_first_timestamp(DataStore *self, PyObject *args);
 
@@ -117,6 +117,13 @@ static PyMethodDef DataStore_methods[] = {
         "Set the metadata value of a corresponding key."
     }, 
     
+    {   
+        "timestamp", 
+        (PyCFunction) DataStore_timestamp, 
+        METH_VARARGS,
+        "Get the timestamp of a key. If the key doesn't exit it returns -1."
+    }, 
+
     {   
         "last_timestamp", 
         (PyCFunction) DataStore_last_timestamp, 

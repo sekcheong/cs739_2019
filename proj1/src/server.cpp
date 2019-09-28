@@ -156,7 +156,7 @@ void server::message_handler() {
 							res.clear();
 							buff_len = sizeof(buff);
 							int64_t ts = msg.get_value_timestamp();
-							if (ds_->put(msg.key(), msg.value(), msg.get_value_size(), &ts)) {
+							if (ds_->put(msg.key(), msg.value(), msg.get_value_size(), ts)) {
 								res.set_value(buff, buff_len);
 								res.set_value_timestamp(ts);
 								res.set_command(command::OK);

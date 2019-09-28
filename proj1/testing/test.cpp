@@ -28,12 +28,10 @@ void test_kv_store() {
 	data_store ds("test.db");
 
 	try {
-		int64_t ts = 0;
 		const char *key = "foo";
 		const char *nv = "What's up doc?";		
-		ds.put(key, nv, &ts);
+		ds.put(key, nv);
 		std::cout << "key      : " << key << std::endl;		
-		std::cout << "timestamp: " << ts << std::endl;		
 	}
 	catch (exception &ex) {
 		std::cerr << ex.what()  << " error_code: " << ex.code() << std::endl;

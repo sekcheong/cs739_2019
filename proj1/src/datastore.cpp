@@ -33,18 +33,18 @@ data_store::data_store(const char *filename) {
 	}
 
 	//create the main KVS data table
-	const char *sql = "CREATE TABLE IF NOT EXISTS data_store (key TEXT PRIMARY KEY, value BLOB, timestamp INTEGER);";
+	const char *sql = "CREATE TABLE IF NOT EXISTS data_store (key TEXT PRIMARY KEY, value BLOB, timestamp INTEGER, writetime INTEGER);";
  	ret = sqlite3_exec(db_, sql, 0, 0, 0);
  	if (ret!=SQLITE_OK) {
  		throw exception("Error creating the date_store table", ret);
  	}
 
-	//create create the write log
- 	const char *sql2 = "CREATE TABLE IF NOT EXISTS data_store_log (csn INTEGER PRIMARY KEY DESC, key TEXT, value BLOB, timestamp INTEGER);";
- 	ret = sqlite3_exec(db_, sql2, 0, 0, 0);
- 	if (ret!=SQLITE_OK) {
- 		throw exception("Error creating the date_store_log table", ret);
- 	}
+	// //create create the write log
+ // 	const char *sql2 = "CREATE TABLE IF NOT EXISTS data_store_log (csn INTEGER PRIMARY KEY DESC, key TEXT, value BLOB, timestamp INTEGER);";
+ // 	ret = sqlite3_exec(db_, sql2, 0, 0, 0);
+ // 	if (ret!=SQLITE_OK) {
+ // 		throw exception("Error creating the date_store_log table", ret);
+ // 	}
 
 	//create create the metadata table
 	const char *sql3 = "CREATE TABLE IF NOT EXISTS data_store_meta (key TEXT PRIMARY KEY, value TEXT);";
@@ -127,8 +127,7 @@ int64_t data_store::get_timestamp(const char *key) {
 }
 
 
-
-bool data_store::put(const char *key, const char *value, int len, int64_t *timestamp) {
+bool data_store::put(const char *key, const char *value, int len, int64_t timestamp) {
 	if (!validate_key(key)) {
 		throw exception("sdata_store::put(): Invalid key", -1);
 	}
@@ -136,46 +135,20 @@ bool data_store::put(const char *key, const char *value, int len, int64_t *times
 	if (!validate_value(value, len)) {
 		throw exception("sdata_store::put(): Invalid value", -1);
 	}
-	
-	// int64_t ts;
-	// if (timestamp>0) {
-	// 	 : os_timestamp();
-	// }
-	// else {
 
-	// }
+	if (timestamp<=0) {
+		timestamp = os_timestamp();
+	}
 
-	// {
-	// 	// log the write entry
-	// 	sql_statement stmt_log(db_);
-	// 	const char *sql_log = "INSERT INTO data_store_log(csn, key, value, timestamp) VALUES((SELECT COUNT(*) from data_store_log), ?, ?, ?)";
-	// 	stmt_log.prepare(sql_log);
-	// 	stmt_log.bind_text(1, key);
-	// 	stmt_log.bind_blob(2, value, len);
-	// 	stmt_log.bind_int64(3, ts);
-	// 	stmt_log.execute();
-	// }
-
-
-	// sql_statement stmt(db_);
-	// if (get(key, ov, ov_len, ov_ts)) {	
-	// 	const char *sql = "UPDATE data_store SET value = ?, timestamp = ? WHERE key = ?";
-	// 	stmt.prepare(sql);
-	// 	stmt.bind_blob(1, value, len);		
-	// 	stmt.bind_int64(2, ts);
-	// 	stmt.bind_text(3, key);
-	// 	stmt.execute();
-	// }
-	// else {
-	// 	ts = os_timestamp();
-	// 	const char *sql = " INTO data_store VALUES(?, ?, ?)";
-	// 	stmt.prepare(sql);
-	// 	stmt.bind_text(1, key);
-	// 	stmt.bind_blob(2, value, len);
-	// 	stmt.bind_int64(3, ts);
-	// 	stmt.execute();
-	// 	*ov_len = -1;
-	// }
+	sql_statement stmt(db_);
+	const char *sql = "REPLACE INTO data_store VALUES(?, ?, ?, ?)";
+	stmt.prepare(sql);
+	stmt.bind_text(1, key);
+	stmt.bind_blob(2, value, len);
+	stmt.bind_int64(3, timestamp);
+	int64_t ts = os_timestamp();
+	stmt.bind_int64(4, ts);
+	stmt.execute();
 
 	return true;
 }

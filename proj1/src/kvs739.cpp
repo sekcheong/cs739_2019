@@ -163,10 +163,10 @@ static PyObject* DataStore_get(DataStore *self, PyObject *args) {
 	char buffer[MAX_VALUE_SIZE] = {0};
 	int64_t ts = 0;
 	int len = MAX_VALUE_SIZE-1;
-	data_store *ds = self->store_p;
-
+	
 	try {
-		if (ds->get(key, buffer, &len,  &ts) ==1) {
+		data_store *ds = self->store_p;
+		if (ds->get(key, buffer, &len,  &ts)==1) {
 			buffer[len]=0;
 			return Py_BuildValue("(sL)", buffer, ts);
 		}
@@ -183,22 +183,36 @@ static PyObject* DataStore_get(DataStore *self, PyObject *args) {
 }
 
 
-static PyObject* DataStore_put_private(DataStore *self, char *key, char *value) {
-	char oldval[MAX_VALUE_SIZE] = {0};
+static PyObject* DataStore_put(DataStore *self, PyObject *args) {
+	char* key;
+	char* value;
 	int64_t ts = 0;
-	int len = MAX_VALUE_SIZE-1;
 
-	data_store *ds = self->store_p;
+	auto argc = PyTuple_Size(args);   
+
+	if (argc<2) {
+		PyErr_SetString(PyExc_RuntimeError, "Insufficient number of arguments"); 
+		return NULL;
+	}
+
+
+	if (PyArg_ParseTuple(args, "ssL", &key, &value, &ts)) {
+	 	//we have key, value, and time stamp
+	}
+	else {
+		PyErr_Clear();
+		ts = 0;
+		if (!PyArg_ParseTuple(args, "ss", &key, &value)) {
+			PyErr_SetString(PyExc_RuntimeError, "Invalid parameters"); 
+			return NULL;
+		}
+	}
+
 
 	try {
-		if (ds->put(key, value, strlen(value), oldval, &len, &ts) ==1) {		
-			if (ts>0) {
-				oldval[len] = 0;
-			}
-			else {
-				oldval[0] = 0;
-			}
-			return Py_BuildValue("(sL)", oldval, ts);
+		data_store *ds = self->store_p;
+		if (ds->put(key, value, strlen(value), ts)==1) {		
+			Py_RETURN_NONE;
 		}
 		else {
 			PyErr_SetString(PyExc_RuntimeError, "put value failed");
@@ -209,70 +223,7 @@ static PyObject* DataStore_put_private(DataStore *self, char *key, char *value) 
 		PyErr_SetString(PyExc_RuntimeError, ex.what());
 		return NULL;
 	}
-}
 
-
-static PyObject* DataStore_put(DataStore *self, PyObject *args) {
-	char buffer[128];
-	char* key;
-	char* value;
-	int i;
-	long l;
-	int64_t l64;
-	float f;
-	double d;
-	char c;
-
-	auto argc = PyTuple_Size(args);   
-
-	if (argc!=2) {
-		PyErr_SetString(PyExc_RuntimeError, "insufficient number of parameters"); 
-		return NULL;
-	}
-
-	if (PyArg_ParseTuple(args, "ss", &key, &value)) {
-		return DataStore_put_private(self, key, value);
-	}
-
-	PyErr_Clear();
-	if (PyArg_ParseTuple(args, "si", &key, &i)) {
-		sprintf(buffer, "%d", i);
-		return DataStore_put_private(self, key, buffer);
-	}
-
-	PyErr_Clear();
-	if (PyArg_ParseTuple(args, "sl", &key, &l)) {
-		sprintf(buffer, "%ld", (long) l);
-		return DataStore_put_private(self, key, buffer);
-	}
-
-	PyErr_Clear();
-	if (PyArg_ParseTuple(args, "sL", &key, &l64)) {
-		sprintf(buffer, "%" PRId64, l64);
-		return DataStore_put_private(self, key, buffer);
-	}
-
-	PyErr_Clear();
-	if (PyArg_ParseTuple(args, "sf", &key, &f)) {
-		sprintf(buffer, "%f", f);
-		return DataStore_put_private(self, key, buffer);
-	}
-
-	PyErr_Clear();
-	if (PyArg_ParseTuple(args, "sd", &key, &d)) {
-		sprintf(buffer, "%f", d);
-		return DataStore_put_private(self, key, buffer);
-	}
-
-	PyErr_Clear();
-	if (PyArg_ParseTuple(args, "sc", &key, &c)) {
-		sprintf(buffer, "%c", c);
-		return DataStore_put_private(self, key, buffer);
-	}
-	else {
-		PyErr_SetString(PyExc_RuntimeError, "Invalid parameters"); 
-		return NULL;
-	}
 }
 
 
@@ -332,13 +283,49 @@ static PyObject* DataStore_put_meta(DataStore *self, PyObject *args) {
 }
 
 
+static PyObject* DataStore_timestamp(DataStore *self, PyObject *args) {
+	char* key;
+
+	if (PyTuple_Size(args)!=1 || !PyArg_ParseTuple(args, "s", &key)) {
+		PyErr_SetString(PyExc_RuntimeError, "Invalid parameters"); 
+		return NULL;
+	}
+
+	try {
+		data_store *ds = self->store_p;
+		int64_t ts = ds->get_timestamp(key);
+		return Py_BuildValue("L", ts);
+	}
+	catch (exception &ex) {
+		PyErr_SetString(PyExc_RuntimeError, ex.what());
+		return NULL;
+	}
+}
+
+
 static PyObject* DataStore_last_timestamp(DataStore *self, PyObject *args) {
-	return Py_BuildValue("L", 0);
+	try {
+		data_store *ds = self->store_p;
+		int64_t ts = ds->get_last_timestamp();
+		return Py_BuildValue("L", ts);
+	}
+	catch (exception &ex) {
+		PyErr_SetString(PyExc_RuntimeError, ex.what());
+		return NULL;
+	}
 }
 
 
 static PyObject* DataStore_first_timestamp(DataStore *self, PyObject *args) {
-	return Py_BuildValue("L", 0);
+	try {
+		data_store *ds = self->store_p;
+		int64_t ts = ds->get_first_timestamp();
+		return Py_BuildValue("L", ts);
+	}
+	catch (exception &ex) {
+		PyErr_SetString(PyExc_RuntimeError, ex.what());
+		return NULL;
+	}
 }
 
 

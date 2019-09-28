@@ -20,7 +20,7 @@ public:
 	virtual ~data_store();
 
 	virtual bool get(const char *key, char *value, int *len, int64_t *timestamp);
-	virtual bool put(const char *key, const char *value, int len, int64_t *timestamp);
+	virtual bool put(const char *key, const char *value, int len, int64_t timestamp);
 
 	virtual bool get_meta(const char *key, char *value, int *len);
 	virtual bool put_meta(const char *key, const char *value);
@@ -44,7 +44,7 @@ public:
 
 	virtual bool put(const char *key, const char *value, int len) {
 		int64_t ts = 0;
-		return put(key, value, len, &ts);
+		return put(key, value, len, ts);
 	}
 
 	virtual bool put(const char *key, const char *value) {
