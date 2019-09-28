@@ -37,6 +37,9 @@ static PyObject* kvs_get(PyObject *self, PyObject *args);
 //The old_value parameter must be at least one byte larger than the maximum value size. 
 static PyObject* kvs_put(PyObject *self, PyObject *args);
 
+//Get the OS timestamp in micro seconds
+static PyObject* kvs_timestamp(PyObject *self, PyObject *args);
+
 
 PyMODINIT_FUNC PyInit_kvs(void);
 
@@ -65,6 +68,13 @@ static PyMethodDef module_methods[] = {
         METH_VARARGS,
         "Perform a get operation on the current value into old_value and then store the specified value."
     }, 
+
+    {   
+        "timestamp", 
+        (PyCFunction) kvs_timestamp, 
+        METH_NOARGS,
+        "Get the OS timestamp in micro seconds."
+    },
 
     {NULL, NULL, 0, NULL}
 };

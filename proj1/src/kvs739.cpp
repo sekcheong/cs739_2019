@@ -95,6 +95,11 @@ static PyObject* kvs_put(PyObject *self, PyObject *args) {
 }
 
 
+static PyObject* kvs_timestamp(PyObject *self, PyObject *args) {
+	int64_t ts = data_store::os_timestamp();
+	return Py_BuildValue("L", ts);
+}
+
 static PyObject *DataStore_new(PyTypeObject *type, PyObject *args, PyObject *kwds) {
 	DEBUG_PRINT("DataStore_new() [begin]");
     DataStore *self;
@@ -285,6 +290,11 @@ static PyObject* DataStore_put_meta(DataStore *self, PyObject *args) {
 
 static PyObject* DataStore_timestamp(DataStore *self, PyObject *args) {
 	char* key;
+
+	if (PyTuple_Size(args)==0) {
+		int64_t ts = data_store::os_timestamp();
+		return Py_BuildValue("L", ts);
+	}
 
 	if (PyTuple_Size(args)!=1 || !PyArg_ParseTuple(args, "s", &key)) {
 		PyErr_SetString(PyExc_RuntimeError, "Invalid parameters"); 
