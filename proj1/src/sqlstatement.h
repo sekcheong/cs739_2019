@@ -3,6 +3,7 @@
 
 #include <string>
 #include <cstring>
+#include <memory>
 #include "sqlite3.h"
 #include "exception.h"
 

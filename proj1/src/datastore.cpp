@@ -220,6 +220,16 @@ int64_t data_store::get_first_timestamp() {
 }
 
 
+sql_result data_store::get_key_value_since(int64_t since) {
+	auto stmt = std::make_shared<sql_statement>(db_);
+	const char* sql = "select * from data_store where timestamp>=? order by timestamp asc";
+	stmt->prepare(sql);
+	stmt->bind_int64(1, since);
+	sql_result r(stmt);
+	return r;
+}
+
+
 bool data_store::validate_key(const char *key) {
 	int len = strlen(key);
 	if (len==0 || len>MAX_KEY_SIZE) return false;	
