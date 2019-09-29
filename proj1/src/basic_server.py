@@ -11,7 +11,10 @@ t: timestamp
 from collections import defaultdict
 from datetime import datetime
 from enum import Enum, unique
+import json
 from pprint import pprint
+import socket as s
+import sys
 from withsqlite import sqlite_db
 
 
@@ -91,7 +94,7 @@ class KvServer:
         old_value = None
 
         if not time:
-            time = datetime.now()
+            time = float(datetime.strftime(datetime.now(), "%s.%f"))
 
         try:
             old_value = self.kvs[key].v
@@ -187,12 +190,12 @@ class KvServer:
     def serve(self):
         """Serve until killed."""
 
-        self.sock = s.socket(AF_INET, SOCK_STREAM)
+        self.sock = s.socket(s.AF_INET, s.SOCK_STREAM)
         self.sock.bind(('', int(self.id)))
         self.sock.listen(10)
         while self.live:
             newsock, client_addr = self.sock.accept()
-            handleClient(newsock)
+            handle_client(newsock)
 
     def handle_client(self, sock):
         """Handle boxing and unboxing of the remote request."""
@@ -204,7 +207,7 @@ class KvServer:
         received, msg_in = 1, ""
         while received:
             msg_in += data
-            data = sock.revc(32)
+            data = sock.recv(32)
             received = len(data)
 
         request = json.loads(msg_in)
@@ -253,7 +256,6 @@ class KvServer:
 
 
 def main(myport, start, server_ports):
-    import pdb; pdb.set_trace()
     KvServer.servers = [KvServer(port, server_ports, start) for port in server_ports]
 
     try:
@@ -266,10 +268,8 @@ def main(myport, start, server_ports):
     me.serve()
 
 if __name__ == "__main__":
-    import sys
-
     myport = sys.argv[1]
     start = sys.argv[2]
-    server_ports = sys.argv[3]
+    server_ports = json.loads(sys.argv[3])
 
     main(myport, start, server_ports)
