@@ -691,6 +691,59 @@ static PyObject* DataStoreClient_shutdown_server(DataStoreClient *self, PyObject
 }
 
 
+static PyObject *DataStoreResults_new(PyTypeObject *type, PyObject *args, PyObject *kwargs) {
+
+ 	// PyObject *sequence;
+
+  //   if (!PyArg_UnpackTuple(args, "revgen", 1, 1, &sequence))
+  //       return NULL;
+
+  //   /* We expect an argument that supports the sequence protocol */
+  //   if (!PySequence_Check(sequence)) {
+  //       PyErr_SetString(PyExc_TypeError, "revgen() expects a sequence");
+  //       return NULL;
+  //   }
+
+  //   Py_ssize_t len = PySequence_Length(sequence);
+  //   if (len == -1)
+  //       return NULL;
+
+  //   /* Create a new RevgenState and initialize its state - pointing to the last
+  //    * index in the sequence.
+  //   */
+    DataStoreResultsState *rgstate = (DataStoreResultsState *)type->tp_alloc(type, 0);
+    if (!rgstate) {
+        return NULL;
+    }
+
+
+	// cons_cell *cons = PyObject_NEW(cons_cell, &cons_type);
+ //    if(cons) {
+ //        cons->car = car; Py_INCREF(car);   INCREF when holding a PyObject* 
+ //        cons->cdr = cdr; Py_INCREF(cdr);  /* ditto */
+ //    }
+ //    return cons;
+    // Py_INCREF(sequence);
+    // rgstate->sequence = sequence;
+    // rgstate->seq_index = len - 1;
+    // rgstate->enum_index = 0;
+
+    return (PyObject *)rgstate;
+	Py_RETURN_NONE;
+}
+
+static void DataStoreResults_dealloc(DataStoreResultsState *rgstate) {
+	// We need XDECREF here because when the generator is exhausted,
+    // rgstate->sequence is cleared with Py_CLEAR which sets it to NULL.
+    Py_XDECREF(rgstate->sequence);
+    Py_TYPE(rgstate)->tp_free(rgstate);
+}
+
+static PyObject *DataStoreResults_next(DataStoreResultsState *rgstate) {
+	Py_RETURN_NONE;
+}
+
+
 static struct PyModuleDef kvsmodule = {
     PyModuleDef_HEAD_INIT,
     "kvs",
@@ -716,5 +769,9 @@ PyMODINIT_FUNC PyInit_kvs(void) {
     if (PyType_Ready(&DataStoreClientType) < 0) return NULL;
     Py_INCREF(&DataStoreClientType);
     PyModule_AddObject(module, "DataStoreClient", (PyObject *)&DataStoreClientType);
+
+    if (PyType_Ready(&DataStoreResultsType) < 0) return NULL;
+    Py_INCREF(&DataStoreResultsType);
+    PyModule_AddObject(module, "DataStoreResults", (PyObject *)&DataStoreResultsType);
     return module;
 }

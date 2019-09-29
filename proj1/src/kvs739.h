@@ -424,4 +424,55 @@ static PyTypeObject DataStoreClientType = {
     DataStoreClient_new,        /* tp_new */
 };
 
+typedef struct {
+    PyObject_HEAD
+    Py_ssize_t seq_index, enum_index;
+    PyObject *sequence;
+} DataStoreResultsState;
+
+static PyObject *DataStoreResults_new(PyTypeObject *type, PyObject *args, PyObject *kwargs);
+static void DataStoreResults_dealloc(DataStoreResultsState *rgstate);
+static PyObject *DataStoreResults_next(DataStoreResultsState *rgstate);
+
+PyTypeObject DataStoreResultsType = {
+    PyVarObject_HEAD_INIT(&PyType_Type, 0)
+    "DataStoreResults",             /* tp_name */
+    sizeof(DataStoreResultsState),            /* tp_basicsize */
+    0,                              /* tp_itemsize */
+    (destructor)DataStoreResults_dealloc,     /* tp_dealloc */
+    0,                              /* tp_print */
+    0,                              /* tp_getattr */
+    0,                              /* tp_setattr */
+    0,                              /* tp_reserved */
+    0,                              /* tp_repr */
+    0,                              /* tp_as_number */
+    0,                              /* tp_as_sequence */
+    0,                              /* tp_as_mapping */
+    0,                              /* tp_hash */
+    0,                              /* tp_call */
+    0,                              /* tp_str */
+    0,                              /* tp_getattro */
+    0,                              /* tp_setattro */
+    0,                              /* tp_as_buffer */
+    Py_TPFLAGS_DEFAULT,             /* tp_flags */
+    0,                              /* tp_doc */
+    0,                              /* tp_traverse */
+    0,                              /* tp_clear */
+    0,                              /* tp_richcompare */
+    0,                              /* tp_weaklistoffset */
+    PyObject_SelfIter,              /* tp_iter */
+    (iternextfunc)DataStoreResults_next,      /* tp_iternext */
+    0,                              /* tp_methods */
+    0,                              /* tp_members */
+    0,                              /* tp_getset */
+    0,                              /* tp_base */
+    0,                              /* tp_dict */
+    0,                              /* tp_descr_get */
+    0,                              /* tp_descr_set */
+    0,                              /* tp_dictoffset */
+    0,                              /* tp_init */
+    PyType_GenericAlloc,            /* tp_alloc */
+    DataStoreResults_new,           /* tp_new */
+};
+
 #endif
