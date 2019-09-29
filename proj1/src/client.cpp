@@ -179,8 +179,8 @@ int64_t client::get_last_timestamp()  {
 	if (res.get_command()!=command::OK) {
 		throw exception("client::get_last_timestamp() request failed");
 	}
-	return res.get_value_timestamp();
 	DEBUG_PRINT("client::get_last_timestamp() [end]");
+	return res.get_value_timestamp();
 }
 
 
@@ -192,9 +192,10 @@ int64_t client::get_first_timestamp() {
 
 	if (res.get_command()!=command::OK) {
 		throw exception("client::get_first_timestamp() request failed!");
+		return -1;
 	}
-	return res.get_value_timestamp();
 	DEBUG_PRINT("client::get_first_timestamp() [end]");
+	return res.get_value_timestamp();
 }
 
 
@@ -207,9 +208,10 @@ int64_t client::get_timestamp(const char *key) {
 
 	if (res.get_command()!=command::OK) {
 		throw exception("client::get_timestamp() request failed!");
+		return -1;
 	}
-	return res.get_value_timestamp();
 	DEBUG_PRINT("client::get_timestamp() [end]");
+	return res.get_value_timestamp();
 }
 
 

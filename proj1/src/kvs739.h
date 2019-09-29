@@ -424,5 +424,4 @@ static PyTypeObject DataStoreClientType = {
     DataStoreClient_new,        /* tp_new */
 };
 
-static PyObject* module = nullptr;
 #endif
