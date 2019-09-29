@@ -8,6 +8,8 @@ Install the dependencies with:
 
     apt-get python3-dev libpython3-cxx sqlite-dev
 
+This project also includes code from [with_sqlite](https://gitlab.com/nickdaly/withsqlite), a simple Python frontend to SQLite.
+
 # Design
 
 These are components we do or may need:
