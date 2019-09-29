@@ -10,7 +10,7 @@
 #include "debug.h"
 #include "exception.h"
 #include "sqlstatement.h"
-
+#include "sqlresult.h"
 
 class data_store {
 public:
@@ -50,6 +50,8 @@ public:
 		int len = strlen(value);
 		return put(key, value, len);
 	}
+
+	virtual sql_result get_key_value_since(int64_t since);
 
 	static int64_t os_timestamp();
 
