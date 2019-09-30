@@ -121,7 +121,7 @@ class KvServer:
         status = 0
         old_value = None
 
-        if not time:
+        if not time: # handles both None and 0 times (from kvlib)
             time = float(datetime.strftime(datetime.now(), "%s.%f"))
 
         try:
@@ -193,6 +193,7 @@ class KvServer:
         sock = s.socket(s.AF_INET, s.SOCK_STREAM)
         try:
             sock.connect(("localhost", server.id))
+            sock.settimeout(10) # FIXME remove
         except ConnectionRefusedError:
             # server down
             return []
@@ -208,7 +209,7 @@ class KvServer:
         # reveice reply
         received, msg_in = 1, bytes()
         while received:
-            data = sock.recv(32)
+            data = sock.recv(2**16)
             msg_in += data
             received = len(data)
 
@@ -236,28 +237,33 @@ class KvServer:
         # receive the data
         received, msg_in = 1, bytes()
         while received:
-            data = sock.recv(32)
+            data = sock.recv(2**16)
             msg_in += data
             received = len(data)
 
-        request = json.loads(str(msg_in, encoding="ascii"))
-        xmit = lambda x: sock.sendall(json.dumps(x))
+        print("received connection!")
 
-        if request[0] == Action.GET:
-            status, value = self.get(request[1])
-            xmit((status, value))
+        if msg_in:
+            print("msg_in " + str(msg_in, encoding="ascii"))
 
-        if request[0] == Action.INSERT:
-            status, value = self.insert(*request[2:3])
-            xmit((status, value))
+            request = json.loads(str(msg_in, encoding="ascii"))
+            xmit = lambda x: sock.sendall(bytes(json.dumps(x)), encoding="ascii")
 
-        if request[0] == Action.UPDATE:
-            xmit(self.receive(*request[1:]))
+            if request[0] == Action.GET:
+                status, value = self.get(request[1])
+                xmit((status, value))
 
-        if request[0] == Action.SHUTDOWN:
-            # shutdown before closing socket so manager doesn't kill us before
-            # we've saved data.
-            self.shutdown()
+            if request[0] == Action.INSERT:
+                status, value = self.insert(*request[2:3])
+                xmit((status, value))
+
+            if request[0] == Action.UPDATE:
+                xmit(self.receive(*request[1:]))
+
+            if request[0] == Action.SHUTDOWN:
+                # shutdown before closing socket so manager doesn't kill us before
+                # we've saved data.
+                self.shutdown()
 
         sock.close()
 

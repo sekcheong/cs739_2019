@@ -76,13 +76,13 @@ if "__main__" in __name__:
     SCRIPT = sys.argv[1]
 
     try:
-        START = sys.argv[2]
-    except IndexError:
+        START = int(sys.argv[2])
+    except (IndexError, ValueError):
         START = 7390
 
     try:
-        END = sys.argv[3]
-    except IndexError:
+        END = int(sys.argv[3])
+    except (IndexError, ValueError):
         END = 7400
 
     main(SCRIPT, START, END)

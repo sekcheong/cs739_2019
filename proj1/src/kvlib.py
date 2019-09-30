@@ -6,6 +6,7 @@ The init, shutdown, put, and get functions are callable from the C interface.
 All other functions are internal to the library itself.
 
 """
+from basic_server import Action
 import codecs
 import json
 import pdb
@@ -15,6 +16,7 @@ import subprocess
 
 SERVERS = list()
 PIDS = "sek-nick.pids"
+
 
 def init(svr_list):
     """Set active server list."""
@@ -46,20 +48,25 @@ def server_pid(server):
         for line in pidfile:
             line = line.strip().split()
 
-            if server == line[port]:
+            try:
+                port_num = int(line[port])
+            except ValueError:
+                continue
+
+            if server[1] == port_num:
                 return line[pid]
 
-    return (0, 0)
+    return 0
 
 def kill(server):
     """Make server ``(host, port)`` unconnectable."""
 
     global SERVERS
-    sock = s.socket(s.AF_INET, s.SOCK_STREAM)
+    sock = connect(server)
 
-    if connected(sock, server):
-        sock.send(client_shutdown())
-        sock.shutdown()
+    if sock:
+        sock.send(client_msg(Action.SHUTDOWN))
+        sock.shutdown(s.SHUT_RDWR)
         sock.close()
 
     SERVERS.remove(server)
@@ -69,23 +76,6 @@ def start(server):
 
     global SERVERS
     SERVERS.append(server)
-
-def connected(sock, target=None):
-    """Connect to the specified server or a random one over the socket."""
-
-    global SERVERS
-    connected = 0
-
-    while not connected and (SERVERS or target):
-        server = target or random.choice(SERVERS)
-
-        try:
-            sock.connect(server)
-        except ConnectionRefusedError:
-            SERVERS.remove(server)
-            sock.close()
-        else:
-            connected = 1
 
 def put(k, v, old_val=None):
     """Insert k,v into the keystore, set old_val to prevous value."""
@@ -99,14 +89,11 @@ def put(k, v, old_val=None):
     if bad_input(k, v):
         return -1
 
-    sock = s.socket(s.AF_INET, s.SOCK_STREAM)
-
-    print("client_put(k, v): " + client_put(k, v))
-    print("loads(client_put(k, v)): " + str(json.loads(client_put(k, v))))
-
     status = None
-    if connected(sock):
-        sock.send(client_put(k, v))
+    sock = connect()
+
+    if sock:
+        sock.send(client_msg(Action.INSERT, k, v))
         status, old_val = receive(sock)
 
     return status
@@ -119,16 +106,40 @@ def get(k, val=None):
     except ValueError:
         return -1
 
-    sock = s.socket(s.AF_INET, s.SOCK_STREAM)
-
     status = None
-    if connected(sock):
-        sock.send(client_get(k))
+    sock = connect()
+
+    if sock:
+        sock.send(client_msg(Action.GET, k))
         status, val = receive(sock)
 
         sock.close()
 
     return status
+
+def connect(target=None):
+    """Connect to the specified server or a random one over the socket.
+
+    Returns the socket if connected.
+
+    """
+    global SERVERS
+    sock = None
+
+    while not sock and (SERVERS or target):
+        server = target or random.choice(SERVERS)
+        sock = s.socket(s.AF_INET, s.SOCK_STREAM)
+        sock.settimeout(20) # FIXME remove
+
+
+        try:
+            sock.connect(server)
+        except ConnectionRefusedError:
+            SERVERS.remove(server)
+            sock.close()
+            sock = None
+
+    return sock
 
 def bad_input(k, v):
     """Returns true if input is bad."""
@@ -187,23 +198,17 @@ def receive(sock):
     received, msg_in = 1, ""
 
     while received:
-        data = sock.recv(32)
+        data = sock.recv(2**16)
         msg_in += data
         received = len(data)
 
     return json.loads(msg_in)
 
-def client_put(k, v):
-    """Prepare a put or insert message."""
+def client_msg(msg_type, k=None, v=None):
+    """Prepare a message of the specidfed type."""
 
-    return json.dumps([0, 0, k, v, 0])
-
-def client_get(k):
-    """Prepare a get message."""
-
-    return json.dumps([2, 0, k, 0, 0])
-
-def client_shutdown():
-    """Prepare a shutdown message."""
-
-    return json.dumps([3, 0, 0, 0, 0])
+    return bytes(json.dumps({
+        Action.INSERT:    [0, 0, k, v, 0],
+        Action.GET:       [2, 0, k, 0, 0],
+        Action.SHUTDOWN:  [3, 0, 0, 0, 0],
+    }[msg_type]), encoding="ascii")
