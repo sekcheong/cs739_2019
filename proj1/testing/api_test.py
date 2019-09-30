@@ -27,7 +27,6 @@ def on_shutdown():
 	return 1
 
 
-
 #this is your service entry point which hooks up python code to APIs in 
 def main():
 	kvs.init_handler(on_init)
