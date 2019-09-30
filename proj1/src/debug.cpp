@@ -23,11 +23,11 @@ void output_debug_string(const char *message) {
 
 
 void debug_print(const char *fmt, ...) {
-  char buff[MAX_DEBUG_STR_SIZE];
-  va_list args;
-  va_start(args, fmt);
-  vsnprintf(buff, MAX_DEBUG_STR_SIZE - 1, fmt, args);
-  strncat(buff, "\n", MAX_DEBUG_STR_SIZE - 1);
-  va_end(args);
-  output_debug_string(buff);
+	char buff[MAX_DEBUG_STR_SIZE];
+	va_list args;
+	va_start(args, fmt);
+	vsnprintf(buff, MAX_DEBUG_STR_SIZE - 1, fmt, args);
+	strncat(buff, "\n", MAX_DEBUG_STR_SIZE - 1);
+	va_end(args);
+	output_debug_string(buff);
 }
