@@ -17,6 +17,8 @@ import sys
 from withsqlite import sqlite_db
 
 
+NULL = bytes(1)
+
 @unique
 class Action(Enum):
     """The list of available server actions."""
@@ -234,20 +236,22 @@ class KvServer:
         value = ""
         status = 0
 
+        print("received connection!")
+
         # receive the data
         received, msg_in = 1, bytes()
-        while received:
+        while NULL not in msg_in:
             data = sock.recv(2**16)
             msg_in += data
-            received = len(data)
+            print("{} recv {}".format(self.id, len(data)))
 
-        print("received connection!")
+        print("{} msg_len {}".format(self.id, len(msg_in)))
 
         if msg_in:
             print("msg_in " + str(msg_in, encoding="ascii"))
 
-            request = json.loads(str(msg_in, encoding="ascii"))
-            xmit = lambda x: sock.sendall(bytes(json.dumps(x)), encoding="ascii")
+            request = json.loads(str(msg_in[:-1], encoding="ascii"))
+            xmit = lambda x: sock.sendall(bytes(json.dumps(x), encoding="ascii") + NULL)
 
             if request[0] == Action.GET:
                 status, value = self.get(request[1])

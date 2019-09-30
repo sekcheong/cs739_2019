@@ -16,7 +16,7 @@ import subprocess
 
 SERVERS = list()
 PIDS = "sek-nick.pids"
-
+NULL = bytes(1)
 
 def init(svr_list):
     """Set active server list."""
@@ -131,7 +131,6 @@ def connect(target=None):
         sock = s.socket(s.AF_INET, s.SOCK_STREAM)
         sock.settimeout(20) # FIXME remove
 
-
         try:
             sock.connect(server)
         except ConnectionRefusedError:
@@ -195,20 +194,19 @@ def invalid_encoding(astr):
 def receive(sock):
     """Return the value received from the remote server."""
 
-    received, msg_in = 1, ""
+    msg_in = bytes()
 
-    while received:
+    while NULL not in msg_in:
         data = sock.recv(2**16)
         msg_in += data
-        received = len(data)
 
-    return json.loads(msg_in)
+    return json.loads(str(msg_in[:-1], encoding="ascii"))
 
 def client_msg(msg_type, k=None, v=None):
-    """Prepare a message of the specidfed type."""
+    """Prepare a message of the specified type."""
 
     return bytes(json.dumps({
         Action.INSERT:    [0, 0, k, v, 0],
         Action.GET:       [2, 0, k, 0, 0],
         Action.SHUTDOWN:  [3, 0, 0, 0, 0],
-    }[msg_type]), encoding="ascii")
+    }[msg_type]), encoding="ascii") + NULL
