@@ -58,8 +58,14 @@ int main() {
 	char buffer[2048];
 
 	kv739_init(args);
+
 	kv739_get((char *) "apple", buffer);
+
+	printf("value=%s\n",buffer);
+
 	kv739_put((char *) "orange", (char *) "good", buffer);
+	printf("old value=%s\n",buffer);
+
 	kv739_shutdown();
 
 	// char *l[5];

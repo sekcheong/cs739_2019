@@ -2,25 +2,28 @@
 import sys
 import kvs
 
-def on_init(server_list):
+def on_init(servers):
 	print("on_init()")
-	for s in server_list:
-		print ("  ", s)
+	for s in servers:
+	 	print ("   ", s)
 	return 1
 
 def on_put(key, value):
 	print("on_put()")
 	print("  key   : ",key)
 	print("  value : ", value)
-	return "old_value"
+	#returns the old value
+	return "wufoo"
 
 def on_get(key):
 	print("on_get()")
 	print("  key   : ",key)
+	#returns the value
 	return "meow"
 
 def on_shutdown():
 	print("on_shutdown()")
+	#shutdown server
 	return 1
 
 

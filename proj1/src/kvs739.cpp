@@ -230,55 +230,29 @@ static int DataStore_init(DataStore *self, PyObject *args, PyObject *kwds) {
 }
 
 
-static PyObject* make_server_list(char** server_list) {
-	
-	if (!server_list) {
+static PyObject* make_server_list(char** servers) {
+	DEBUG_PRINT("make_server_list() [begin]");
+
+	if (!servers) {
 		Py_RETURN_NONE;
 	}
 
-
-	auto* p = PyList_New(100);
+	auto* p = PyList_New(0);
     if (p==NULL) {
         PyErr_SetString(PyExc_RuntimeError, "unable to allocate server list object");   
         Py_RETURN_NONE;
     }
-    // auto* k = Py_BuildValue("s","name");
-    // auto* v = Py_BuildValue("s", info->name().c_str());    
-    // PyDict_SetItem(p, k, v);
-
-    // k = Py_BuildValue("s","model");
-    // v = Py_BuildValue("s", info->model().c_str());    
-    // PyDict_SetItem(p, k, v);
-
-    // k = Py_BuildValue("s","serial");
-    // v = Py_BuildValue("s", info->serial().c_str());    
-    // PyDict_SetItem(p, k, v); 
-
-    // k = Py_BuildValue("s","vendor");
-    // v = Py_BuildValue("s", info->vendor().c_str());    
-    // PyDict_SetItem(p, k, v);
-
-    // k = Py_BuildValue("s","device_class");
-    // v = Py_BuildValue("s", info->device_class().c_str());
-    // PyDict_SetItem(p, k, v);
-
-    // k = Py_BuildValue("s","version");
-    // v = Py_BuildValue("s", info->version().c_str());
-    // PyDict_SetItem(p, k, v);
-
-    // k = Py_BuildValue("s","index");
-    // v = Py_BuildValue("i", info->index());
-    // PyDict_SetItem(p, k, v);
-    
 
 	int i = 0;
-	std::vector<char*> l;
-	while (server_list[i]) {
-		l.push_back(server_list[i]);
+	while (servers[i]) {
+		DEBUG_PRINT("make_server_list() %s", servers[i]);
+		auto *v = Py_BuildValue("s", servers[i]);
+		PyList_Append(p, v);
 		i++;
 	}
 
-	Py_RETURN_NONE;
+	DEBUG_PRINT("make_server_list() [end]");
+	return p;
 
 }
 
@@ -294,22 +268,32 @@ static int init_callback(char** server_list) {
     //calling any Python API functions.   
 
 	auto *sl = make_server_list(server_list);
+	Py_XINCREF(sl); 
+	// DEBUG_PRINT("init_callback() 1");
     auto gstate = PyGILState_Ensure(); 
-    auto *arglist = Py_BuildValue("O", sl); 
-
+    // DEBUG_PRINT("init_callback() 2");
+    auto *arglist = Py_BuildValue("(O)", sl); 
+    // DEBUG_PRINT("init_callback() 3");
     auto *result = PyObject_CallObject(py_init_callback_, arglist);
-    
+    //auto *result = PyObject_CallObject(py_init_callback_, NULL);
+    Py_DECREF(sl);
+    // DEBUG_PRINT("init_callback() 4");
+
     Py_DECREF(arglist);
+
+    // DEBUG_PRINT("init_callback() 5");
     PyGILState_Release(gstate);
 
+ 	// DEBUG_PRINT("init_callback() 6");
     if (result==NULL) {
         DEBUG_PRINT("init_callback() failed to invoke the callback function");
         PyErr_Clear();
         return -1;
     }
 
-    int ret;
-    PyArg_ParseTuple(result, "i", &ret);
+	// DEBUG_PRINT("init_callback() 7");
+
+    int ret = (int) PyLong_AsLong(result);
 
 	DEBUG_PRINT("init_callback() [end]");  
 
@@ -328,7 +312,7 @@ static int get_callback(char* key, char* value) {
     //calling any Python API functions.   
 
     auto gstate = PyGILState_Ensure(); 
-    auto *arglist = Py_BuildValue("s", key); 
+    auto *arglist = Py_BuildValue("(s)", key); 
 
     auto *result = PyObject_CallObject(py_get_callback_, arglist);
     
@@ -341,12 +325,12 @@ static int get_callback(char* key, char* value) {
         return -1;
     }
 
-    int ret;
-    PyArg_ParseTuple(result, "i", &ret);
+    const char *p = PyUnicode_AsUTF8(result);
+    strcpy(value,p);
 
 	DEBUG_PRINT("get_callback() [end]");  
 
-	return ret;
+	return 1;
 }
 
 
@@ -361,7 +345,7 @@ static int put_callback(char* key, char* value, char* old_value) {
     //calling any Python API functions.   
 
     auto gstate = PyGILState_Ensure(); 
-    auto *arglist = Py_BuildValue("ss", key, value);
+    auto *arglist = Py_BuildValue("(ss)", key, value);
 
     auto *result = PyObject_CallObject(py_put_callback_, arglist);
     
@@ -374,12 +358,12 @@ static int put_callback(char* key, char* value, char* old_value) {
         return -1;
     }
 
-    int ret;
-    PyArg_ParseTuple(result, "i", &ret);
+    const char *p = PyUnicode_AsUTF8(result);
+    strcpy(old_value, p);
 
 	DEBUG_PRINT("put_callback() [end]");  
 
-	return ret;
+	return 1;
 }
 
 
@@ -387,11 +371,6 @@ static int shutdown_callback() {
 	DEBUG_PRINT("shutdown_callback() [begin]");
 
 	if (!py_shutdown_callback_) return -1;
-    
-    //If you are getting called back from another non-Python created 
-    //thread (i.e. a C/C++ thread receiving data on a socket), then 
-    //you MUST acquire Python's Global Interpreter Lock (GIL) before 
-    //calling any Python API functions.   
 
     auto gstate = PyGILState_Ensure(); 
 
@@ -405,8 +384,7 @@ static int shutdown_callback() {
         return -1;
     }
 
-    int ret;
-    PyArg_ParseTuple(result, "i", &ret);
+    int ret = (int) PyLong_AsLong(result);
 
 	DEBUG_PRINT("shutdown_callback() [end]");  
 
