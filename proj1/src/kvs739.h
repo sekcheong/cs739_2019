@@ -10,12 +10,16 @@
 #include <string.h>
 
 #include "lib739kv.h"
+#include "kvproxy.h"
 #include "datastore.h"
 #include "client.h"
 #include "server.h"
 #include "message.h"
 #include "strutil.h"
 
+static PyObject* make_server_list(char** server_list);
+
+static int init_callback(char** server_list);
 
 //Provide a null-terminated array of server names (similarly to argv[]). 
 //Each server name has the format "host:port" and initialize the client code. 
@@ -40,6 +44,14 @@ static PyObject* kvs_put(PyObject *self, PyObject *args);
 //Get the OS timestamp in micro seconds
 static PyObject* kvs_timestamp(PyObject *self, PyObject *args);
 
+static PyObject* kvs_init_handler(PyObject *self, PyObject *args);
+
+static PyObject* kvs_put_handler(PyObject *self, PyObject *args);
+
+static PyObject* kvs_get_handler(PyObject *self, PyObject *args);
+
+static PyObject* kvs_shutdown_handler(PyObject *self, PyObject *args);
+
 
 PyMODINIT_FUNC PyInit_kvs(void);
 
@@ -50,18 +62,21 @@ static PyMethodDef module_methods[] = {
         METH_VARARGS,
         "Initialize the KVS with a list of sserver name. Each server name has the format \"host:port\" and initialize the client code."
     },  
+    
     {   
         "shutdown", 
         (PyCFunction) kvs_shutdown, 
         METH_NOARGS,
         "Shutdown the connection to a server and free state."
     }, 
+
     {   
         "get", 
         (PyCFunction) kvs_get, 
         METH_VARARGS,
         "Retrieve the value corresponding to the key."
     }, 
+    
     {   
         "put", 
         (PyCFunction) kvs_put, 
@@ -74,6 +89,34 @@ static PyMethodDef module_methods[] = {
         (PyCFunction) kvs_timestamp, 
         METH_NOARGS,
         "Get the OS timestamp in micro seconds."
+    },
+
+    {   
+        "init_handler", 
+        (PyCFunction) kvs_init_handler, 
+        METH_VARARGS,
+        "Set the init handler"
+    },  
+    
+    {   
+        "put_handler", 
+        (PyCFunction) kvs_put_handler, 
+        METH_NOARGS,
+        "Set the put handler"
+    }, 
+
+    {   
+        "get_handler", 
+        (PyCFunction) kvs_get_handler, 
+        METH_VARARGS,
+        "Set the get handler"
+    }, 
+    
+    {   
+        "shutdown_handler", 
+        (PyCFunction) kvs_shutdown_handler, 
+        METH_NOARGS,
+        "Set the shutdown handler"
     },
 
     {NULL, NULL, 0, NULL}
@@ -299,7 +342,6 @@ static PyTypeObject DataStoreServerType = {
     0,                          /* tp_alloc */
      DataStoreServer_new,        /* tp_new */
 };
-
 
 
 typedef struct {

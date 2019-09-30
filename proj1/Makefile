@@ -48,6 +48,7 @@ OBJ=	sqlite3.o \
 		message.o \
 		server.o \
 		client.o \
+		kvproxy.o \
 		lib739kv.o \
 
 #list of executable to build
@@ -56,6 +57,7 @@ EXEC =  kvdaemon \
 		test \
 		server_test \
 		client_test \
+		api_test \
 
 EXECOBJA = $(addprefix $(OBJDIR), $(EXEC))
 
