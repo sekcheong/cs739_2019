@@ -51,6 +51,8 @@ OBJ=	sqlite3.o \
 		dsclient.o \
 		kvproxy.o \
 		lib739kv.o \
+		rpcclient.o \
+		rpcserver.o \
 
 
 #list of executable to build
@@ -59,6 +61,8 @@ EXEC =  kvdaemon \
 		server_test \
 		client_test \
 		api_test \
+# 		rpcc \
+# 		rpcs \
 
 
 EXECOBJA = $(addprefix $(OBJDIR), $(EXEC))

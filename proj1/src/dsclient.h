@@ -1,5 +1,5 @@
-#ifndef CLIENT_H
-#define CLIENT_H
+#ifndef DSCLIENT_H
+#define DSCLIENT_H
 
 #include <string>
 #include <vector>

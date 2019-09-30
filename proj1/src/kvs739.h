@@ -10,16 +10,19 @@
 #include <string.h>
 
 #include "lib739kv.h"
-#include "kvproxy.h"
 #include "datastore.h"
 #include "dsclient.h"
 #include "dsserver.h"
 #include "message.h"
+#include "rpcserver.h"
 #include "strutil.h"
 
-static PyObject* make_server_list(char** server_list);
+// static PyObject* make_server_list(char** server_list);
 
-static int init_callback(char** server_list);
+// static int init_callback(char** server_list);
+// static int get_callback(char** server_list);
+// static int put_callback(char** server_list);
+// static int shutdown_callback(char** server_list);
 
 //Provide a null-terminated array of server names (similarly to argv[]). 
 //Each server name has the format "host:port" and initialize the client code. 
@@ -101,7 +104,7 @@ static PyMethodDef module_methods[] = {
     {   
         "put_handler", 
         (PyCFunction) kvs_put_handler, 
-        METH_NOARGS,
+        METH_VARARGS,
         "Set the put handler"
     }, 
 
@@ -115,7 +118,7 @@ static PyMethodDef module_methods[] = {
     {   
         "shutdown_handler", 
         (PyCFunction) kvs_shutdown_handler, 
-        METH_NOARGS,
+        METH_VARARGS,
         "Set the shutdown handler"
     },
 
