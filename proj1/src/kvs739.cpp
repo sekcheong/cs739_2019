@@ -140,6 +140,28 @@ static PyObject* kvs_init_handler(PyObject *self, PyObject *args) {
 
 static PyObject* kvs_put_handler(PyObject *self, PyObject *args) {
 	DEBUG_PRINT("kvs_put_handler() [begin]");
+
+	PyObject *cb;
+    
+    if (!PyArg_ParseTuple(args, "O", &cb)) {
+    	PyErr_SetString(PyExc_RuntimeError, "Invalid parameters"); 
+    	return NULL;
+    }
+
+    if (cb == Py_None) {
+    	Py_XDECREF(py_put_callback_);
+    	py_put_callback_ = 0;
+        Py_RETURN_NONE;
+    }
+    
+    if (!PyCallable_Check(cb)) {
+        PyErr_SetString(PyExc_TypeError, "parameter must be callable");
+        return NULL;
+    }
+
+	Py_XINCREF(cb); 
+	py_put_callback_ = cb;
+
 	DEBUG_PRINT("kvs_put_handler() [end]");
 	Py_RETURN_NONE;
 }
@@ -147,6 +169,28 @@ static PyObject* kvs_put_handler(PyObject *self, PyObject *args) {
 
 static PyObject* kvs_get_handler(PyObject *self, PyObject *args) {
 	DEBUG_PRINT("kvs_get_handler() [begin]");
+	
+	PyObject *cb;
+    
+    if (!PyArg_ParseTuple(args, "O", &cb)) {
+    	PyErr_SetString(PyExc_RuntimeError, "Invalid parameters"); 
+    	return NULL;
+    }
+
+    if (cb == Py_None) {
+    	Py_XDECREF(py_get_callback_);
+    	py_get_callback_ = 0;
+        Py_RETURN_NONE;
+    }
+    
+    if (!PyCallable_Check(cb)) {
+        PyErr_SetString(PyExc_TypeError, "parameter must be callable");
+        return NULL;
+    }
+
+	Py_XINCREF(cb); 
+	py_get_callback_ = cb;
+
 	DEBUG_PRINT("kvs_get_handler() [end]");
 	Py_RETURN_NONE;
 }
@@ -154,6 +198,28 @@ static PyObject* kvs_get_handler(PyObject *self, PyObject *args) {
 
 static PyObject* kvs_shutdown_handler(PyObject *self, PyObject *args) {
 	DEBUG_PRINT("kvs_shutdown_handler() [begin]");
+	
+	PyObject *cb;
+    
+    if (!PyArg_ParseTuple(args, "O", &cb)) {
+    	PyErr_SetString(PyExc_RuntimeError, "Invalid parameters"); 
+    	return NULL;
+    }
+
+    if (cb == Py_None) {
+    	Py_XDECREF(py_shutdown_callback_);
+    	py_shutdown_callback_ = 0;
+        Py_RETURN_NONE;
+    }
+    
+    if (!PyCallable_Check(cb)) {
+        PyErr_SetString(PyExc_TypeError, "parameter must be callable");
+        return NULL;
+    }
+
+	Py_XINCREF(cb); 
+	py_shutdown_callback_ = cb;
+
 	DEBUG_PRINT("kvs_shutdown_handler() [end]");
 	Py_RETURN_NONE;
 }
@@ -211,6 +277,9 @@ static PyObject* make_server_list(char** server_list) {
 		l.push_back(server_list[i]);
 		i++;
 	}
+
+	Py_RETURN_NONE;
+
 }
 
 

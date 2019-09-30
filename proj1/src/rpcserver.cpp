@@ -19,7 +19,6 @@ rpc_server::~rpc_server() {
 	if (running_) {
 		stop();
 	}
-
 	DEBUG_PRINT("rpc_server::~rpc_server() [end]");
 }
 
@@ -169,10 +168,10 @@ void rpc_server::message_handler() {
 					break;
 
     			case command::SHUT_DOWN: {
-    		// 			message res;
+						// message res;
 						// msg.set_command(command::OK);
 						// send(sockfd, (void *) &msg, sizeof(message), 0);
-    		// 			stop();
+						// stop();
     				}
 					break;
 

@@ -61,8 +61,8 @@ EXEC =  kvdaemon \
 		server_test \
 		client_test \
 		api_test \
-		rpcc \
-		rpcs \
+# 		rpcc \
+# 		rpcs \
 
 
 EXECOBJA = $(addprefix $(OBJDIR), $(EXEC))
