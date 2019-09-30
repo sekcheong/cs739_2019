@@ -56,7 +56,7 @@ def main(script, start, end):
         for svr in servers:
             svr = str(svr)
             proc = subprocess.Popen(
-                ["python3", "basic-server.py",
+                ["python3", "basic_server.py",
                  svr, json.dumps(now), json.dumps(servers)])
 
             pidfile.write("{} {}\n".format(proc.pid, svr))

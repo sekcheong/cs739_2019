@@ -8,14 +8,14 @@ import sys
 old_val = 0
 
 def main(servers):
-    pdb.set_trace()
-
     kvlib.init(servers)
 
     print(kvlib.put("a", 1, old_val))
     print(old_val)
     print(kvlib.get("a", old_val))
     print(old_val)
+
+    pdb.set_trace()
 
     kvlib.shutdown()
 

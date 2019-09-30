@@ -8,6 +8,7 @@ All other functions are internal to the library itself.
 """
 import codecs
 import json
+import pdb
 import random
 import socket as s
 import subprocess
@@ -54,6 +55,7 @@ def kill(server):
 
     if connected(sock, server):
         sock.send(client_shutdown())
+        sock.shutdown()
         sock.close()
 
     SERVERS.remove(server)
@@ -64,19 +66,23 @@ def start(server):
     global SERVERS
     SERVERS.append(server)
 
-def connected(sock, server=None):
+def connected(sock, target=None):
     """Connect to the specified server or a random one over the socket."""
 
     global SERVERS
     connected = 0
 
-    while not connected and (SERVERS or server):
-        server = server or random.choice(SERVERS)
+    while not connected and (SERVERS or target):
+        server = target or random.choice(SERVERS)
+        server = (server[0], int(server[1]))
 
         try:
-            connected = sock.connect(server)
+            sock.connect(server)
         except ConnectionRefusedError:
             SERVERS.remove(server)
+            sock.close()
+        else:
+            connected = 1
 
 def put(k, v, old_val=None):
     """Insert k,v into the keystore, set old_val to prevous value."""
@@ -92,11 +98,13 @@ def put(k, v, old_val=None):
 
     sock = s.socket(s.AF_INET, s.SOCK_STREAM)
 
+    print("client_put(k, v): " + client_put(k, v))
+    print("loads(client_put(k, v)): " + json.loads(client_put(k, v)))
+
     status = None
     if connected(sock):
         sock.send(client_put(k, v))
         status, old_val = receive(sock)
-        sock.close()
 
     return status
 
@@ -185,14 +193,14 @@ def receive(sock):
 def client_put(k, v):
     """Prepare a put or insert message."""
 
-    return json.loads([0, 0, k, v, 0])
+    return json.dumps([0, 0, k, v, 0])
 
 def client_get(k):
     """Prepare a get message."""
 
-    return json.loads([2, 0, k, 0, 0])
+    return json.dumps([2, 0, k, 0, 0])
 
 def client_shutdown():
     """Prepare a shutdown message."""
 
-    return json.loads([3, 0, 0, 0, 0])
+    return json.dumps([3, 0, 0, 0, 0])

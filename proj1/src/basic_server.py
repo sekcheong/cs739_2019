@@ -12,7 +12,6 @@ from collections import defaultdict
 from datetime import datetime
 from enum import Enum, unique
 import json
-from pprint import pprint
 import socket as s
 import sys
 from withsqlite import sqlite_db
@@ -117,6 +116,8 @@ class KvServer:
         self.db.save()
 
     def insert(self, key, value, time=None):
+        """Insert new value into the kv-store."""
+
         status = 0
         old_value = None
 
@@ -205,7 +206,7 @@ class KvServer:
             return []
 
         # reveice reply
-        received, msg_in = 1, ""
+        received, msg_in = 1, bytes()
         while received:
             data = sock.recv(32)
             msg_in += data
@@ -223,7 +224,7 @@ class KvServer:
         self.sock.bind(('', int(self.id)))
         self.sock.listen(10)
         while self.live:
-            newsock, client_addr = self.sock.accept()
+            newsock = self.sock.accept()[0]
             self.handle_client(newsock)
 
     def handle_client(self, sock):
@@ -233,7 +234,7 @@ class KvServer:
         status = 0
 
         # receive the data
-        received, msg_in = 1, ""
+        received, msg_in = 1, bytes()
         while received:
             data = sock.recv(32)
             msg_in += data
@@ -285,20 +286,18 @@ class KvServer:
 
 
 def main(myport, start, server_ports):
+    """Load server list and start serving."""
+
     KvServer.servers = [KvServer(port, server_ports, start) for port in server_ports]
 
     try:
-        me = [s for s in KvServer.servers if s.id == myport][0]
+        myserver = [s for s in KvServer.servers if s.id == myport][0]
     except IndexError:
         raise RuntimeError(
             "Server port {} must be included in list of available servers: {}".format(
                 myport, server_ports))
 
-    me.serve()
+    myserver.serve()
 
 if __name__ == "__main__":
-    myport = sys.argv[1]
-    start = sys.argv[2]
-    server_ports = json.loads(sys.argv[3])
-
-    main(myport, start, server_ports)
+    main(sys.argv[1], sys.argv[2], json.loads(sys.argv[3]))
