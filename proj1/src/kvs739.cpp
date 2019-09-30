@@ -266,7 +266,7 @@ static int init_callback(char** server_list) {
     //thread (i.e. a C/C++ thread receiving data on a socket), then 
     //you MUST acquire Python's Global Interpreter Lock (GIL) before 
     //calling any Python API functions.   
-
+	bool error = false;
 	auto *sl = make_server_list(server_list);
 	Py_XINCREF(sl); 
 	// DEBUG_PRINT("init_callback() 1");
@@ -276,6 +276,14 @@ static int init_callback(char** server_list) {
     // DEBUG_PRINT("init_callback() 3");
     auto *result = PyObject_CallObject(py_init_callback_, arglist);
     //auto *result = PyObject_CallObject(py_init_callback_, NULL);
+   	// DEBUG_PRINT("init_callback() 6");
+    
+    if (result==NULL) {
+        DEBUG_PRINT("init_callback() failed to invoke the callback function");
+        PyErr_Clear();
+        error = true;
+    }
+
     Py_DECREF(sl);
     // DEBUG_PRINT("init_callback() 4");
 
@@ -284,12 +292,7 @@ static int init_callback(char** server_list) {
     // DEBUG_PRINT("init_callback() 5");
     PyGILState_Release(gstate);
 
- 	// DEBUG_PRINT("init_callback() 6");
-    if (result==NULL) {
-        DEBUG_PRINT("init_callback() failed to invoke the callback function");
-        PyErr_Clear();
-        return -1;
-    }
+    if (error) return -1;
 
 	// DEBUG_PRINT("init_callback() 7");
 
@@ -311,20 +314,29 @@ static int get_callback(char* key, char* value) {
     //you MUST acquire Python's Global Interpreter Lock (GIL) before 
     //calling any Python API functions.   
 
+	bool error = false;
     auto gstate = PyGILState_Ensure(); 
     auto *arglist = Py_BuildValue("(s)", key); 
 
     auto *result = PyObject_CallObject(py_get_callback_, arglist);
-    
-    Py_DECREF(arglist);
-    PyGILState_Release(gstate);
 
+
+ 	DEBUG_PRINT("get_callback() 5");
     if (result==NULL) {
         DEBUG_PRINT("get_callback() failed to invoke the callback function");
         PyErr_Clear();
-        return -1;
+        DEBUG_PRINT("get_callback() 5.5");
+        error = true;
     }
 
+    DEBUG_PRINT("get_callback() 4");
+
+    Py_DECREF(arglist);
+    PyGILState_Release(gstate);
+
+   if (error) return -1;
+
+    DEBUG_PRINT("get_callback() 6");
     const char *p = PyUnicode_AsUTF8(result);
     strcpy(value,p);
 
@@ -343,20 +355,22 @@ static int put_callback(char* key, char* value, char* old_value) {
     //thread (i.e. a C/C++ thread receiving data on a socket), then 
     //you MUST acquire Python's Global Interpreter Lock (GIL) before 
     //calling any Python API functions.   
-
+	bool error = false;
     auto gstate = PyGILState_Ensure(); 
     auto *arglist = Py_BuildValue("(ss)", key, value);
 
     auto *result = PyObject_CallObject(py_put_callback_, arglist);
     
-    Py_DECREF(arglist);
-    PyGILState_Release(gstate);
-
     if (result==NULL) {
         DEBUG_PRINT("put_callback() failed to invoke the callback function");
         PyErr_Clear();
-        return -1;
+        error = true;
     }
+
+    Py_DECREF(arglist);
+    PyGILState_Release(gstate);
+
+    if (error) return -1;
 
     const char *p = PyUnicode_AsUTF8(result);
     strcpy(old_value, p);
@@ -372,18 +386,21 @@ static int shutdown_callback() {
 
 	if (!py_shutdown_callback_) return -1;
 
+	bool error = false;
+
     auto gstate = PyGILState_Ensure(); 
 
     auto *result = PyObject_CallObject(py_shutdown_callback_, NULL);
-    
-    PyGILState_Release(gstate);
-
     if (result==NULL) {
         DEBUG_PRINT("shutdown_callback() failed to invoke the callback function");
         PyErr_Clear();
-        return -1;
+        error = true;
     }
 
+    PyGILState_Release(gstate);
+
+    if (error) return -1;
+    
     int ret = (int) PyLong_AsLong(result);
 
 	DEBUG_PRINT("shutdown_callback() [end]");  

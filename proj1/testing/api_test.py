@@ -19,6 +19,7 @@ def on_get(key):
 	print("on_get()")
 	print("  key   : ",key)
 	#returns the value
+	raise NameError("Key doesn't exist")
 	return "meow"
 
 def on_shutdown():
