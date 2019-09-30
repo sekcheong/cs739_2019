@@ -36,55 +36,53 @@ restart.  The library discards unreachable servers during a run.
 
 To restart testing from a clean slate, you'll also need to delete any
 stale .sqlite files, which are tied to the host's port.
-
 """
 
 from datetime import datetime
 import json
-import pdb
 import subprocess
 import sys
 
-# FIXME remove
-sys.argv.append("test1.py")
+def main(script, start, end):
+    """Start servers in start:end range, run test script."""
 
+    pids = "sek-nick.pids"
+    now = float(datetime.strftime(datetime.now(), "%s.%f"))
+    servers = [x for x in range(start, end)]
 
-if len(sys.argv) < 2:
-    print(__doc__)
-    exit(1)
+    with open(pids, "w") as pidfile:
+        pidfile.write("# pid host:port\n")
 
+        for svr in servers:
+            svr = str(svr)
+            proc = subprocess.Popen(
+                ["python3", "basic_server.py",
+                 svr, json.dumps(now), json.dumps(servers)])
 
-try:
-    start = sys.argv[2]
-except IndexError:
-    start = 7390
+            pidfile.write("{} {}\n".format(proc.pid, svr))
 
-try:
-    end = sys.argv[3]
-except IndexError:
-    end = 7400
+    subprocess.run(
+        [script, json.dumps(["localhost:" + str(svr) for svr in servers])])
 
+if "__main__" in __name__:
+    # fixme remove
+    if len(sys.argv) == 1:
+        sys.argv.append("./test1.py")
 
-script = sys.argv[1]
-pids = "sek-nick.pids"
-servers = [x for x in range(start, end)]
-servers_json = json.dumps(servers)
-now = datetime.strftime(datetime.now(), "%s.%f")
-pdb.set_trace()
+    if len(sys.argv) < 2:
+        print(__doc__)
+        exit(1)
 
-now_json = json.dumps(now)
+    SCRIPT = sys.argv[1]
 
+    try:
+        START = sys.argv[2]
+    except IndexError:
+        START = 7390
 
-with open(pids, "w") as pidfile:
-    pidfile.write("# pid host:port")
+    try:
+        END = sys.argv[3]
+    except IndexError:
+        END = 7400
 
-    for s in servers:
-        s = str(s)
-        proc = subprocess.Popen(["python3", "basic-server.py",
-                                 s, now_json, servers_json])
-
-        pidfile.write("{} {}\n".format(proc.pid, s))
-
-# FIXME uncomment
-# subprocess.run([script,
-#                 json.dumps(["localhost:" + s for s in servers])])
+    main(SCRIPT, START, END)

@@ -11,18 +11,24 @@ t: timestamp
 from collections import defaultdict
 from datetime import datetime
 from enum import Enum, unique
-from pprint import pprint
+import json
+import socket as s
+import sys
 from withsqlite import sqlite_db
 
 
 @unique
 class Action(Enum):
+    """The list of available server actions."""
+
     INSERT = 0
     UPDATE = 1
     GET = 2
     SHUTDOWN = 3
 
 class KvEntry:
+    """A single key-value entry."""
+
     def __init__(self, k=None, v=None, t=None):
         if not k:
             k = ""
@@ -38,7 +44,30 @@ class KvEntry:
 
 
 class KvServer:
+    """The key-value server.
 
+    The server sync protocol is as follows:
+
+    1. Each server keeps track of each other server's last updated time.
+    2. When a server receives a new or updated key from the client, it saves
+       that update with the current time into the local database.  This is
+       automatically the newest value for the data because the project assumes
+       only a single client is running at one time.
+    3. After saving the value, the server broadcasts it to every other server.
+    4. Each other server receives that key, value, and timestamp, storing it if
+       the key is new or the timstamp is newer.
+    5. The remote server reviews both timestamps it has for the originating
+       server (the last update time and current key's time).  If this server has
+       any updates newer than the oldest of those times, it'll reply with those
+       k,v,t triplets.  It then stores the latest timestamp as the originating
+       server's current timestamp.
+    6. The originating server then saves the keys it received that are new or
+       newer, updates its clock for the remote server to the latest key it
+       received, and backs up its own clock to the earliest update it didn't
+       have.
+    7. All servers then wait for a new connection.
+
+    """
     servers = list()
 
     def __init__(self, me, allServers, start):
@@ -87,11 +116,13 @@ class KvServer:
         self.db.save()
 
     def insert(self, key, value, time=None):
+        """Insert new value into the kv-store."""
+
         status = 0
         old_value = None
 
         if not time:
-            time = datetime.now()
+            time = float(datetime.strftime(datetime.now(), "%s.%f"))
 
         try:
             old_value = self.kvs[key].v
@@ -113,7 +144,7 @@ class KvServer:
         """Return the key's value and whether it exists: (exists?, value)"""
 
         try:
-            value = kvs[k].v
+            value = self.kvs[k].v
             status = 0
         except KeyError:
             value = ""
@@ -126,7 +157,7 @@ class KvServer:
 
         for server in KvServer.servers:
             if server.live and server.id != self.id:
-                self.update(server, send_kv(server, k, v, t))
+                self.update(server, self.send_kv(server, k, v, t))
 
     def update(self, server, replay):
         """This server received zero or more update keys in reply.
@@ -135,10 +166,12 @@ class KvServer:
         as updated as the most recent key they sent us.
 
         """
+        newer_keys = list()
+
         for kve in replay:
             if kve not in self.kvs or self.kvs[kve.k].t <= kve.t:
                 self.kvs[kve.k] = kve
-
+                newer_keys.append(kve)
         try:
             self.server_updates[server.id] = max([x.t for x in replay])
         except ValueError:
@@ -147,7 +180,7 @@ class KvServer:
 
         # Oh shoot, the remote sent us back updates that were older than we are
         # right now.  That means we were out of date, so roll back our clock.
-        self.server_updates[self.id] = (min([x.t for x in replay] +
+        self.server_updates[self.id] = (min([x.t for x in newer_keys] +
                                             [self.server_updates[self.id]]))
 
     def send_kv(self, server, k, v, t):
@@ -173,7 +206,7 @@ class KvServer:
             return []
 
         # reveice reply
-        received, msg_in = 1, ""
+        received, msg_in = 1, bytes()
         while received:
             data = sock.recv(32)
             msg_in += data
@@ -187,12 +220,12 @@ class KvServer:
     def serve(self):
         """Serve until killed."""
 
-        self.sock = s.socket(AF_INET, SOCK_STREAM)
+        self.sock = s.socket(s.AF_INET, s.SOCK_STREAM)
         self.sock.bind(('', int(self.id)))
         self.sock.listen(10)
         while self.live:
-            newsock, client_addr = self.sock.accept()
-            handleClient(newsock)
+            newsock = self.sock.accept()[0]
+            self.handle_client(newsock)
 
     def handle_client(self, sock):
         """Handle boxing and unboxing of the remote request."""
@@ -201,27 +234,27 @@ class KvServer:
         status = 0
 
         # receive the data
-        received, msg_in = 1, ""
+        received, msg_in = 1, bytes()
         while received:
+            data = sock.recv(32)
             msg_in += data
-            data = sock.revc(32)
             received = len(data)
 
         request = json.loads(msg_in)
         xmit = lambda x: sock.sendall(json.dumps(x))
 
-        if (request[0] == Action.GET):
+        if request[0] == Action.GET:
             status, value = self.get(request[1])
             xmit((status, value))
 
-        if (request[0] == Action.INSERT):
+        if request[0] == Action.INSERT:
             status, value = self.insert(*request[2:3])
             xmit((status, value))
 
-        if (request[0] == Action.UPDATE):
+        if request[0] == Action.UPDATE:
             xmit(self.receive(*request[1:]))
 
-        if (request[0] == Action.SHUTDOWN):
+        if request[0] == Action.SHUTDOWN:
             # shutdown before closing socket so manager doesn't kill us before
             # we've saved data.
             self.shutdown()
@@ -253,23 +286,18 @@ class KvServer:
 
 
 def main(myport, start, server_ports):
-    import pdb; pdb.set_trace()
+    """Load server list and start serving."""
+
     KvServer.servers = [KvServer(port, server_ports, start) for port in server_ports]
 
     try:
-        me = [s for s in KvServer.servers if s.id == myport][0]
+        myserver = [s for s in KvServer.servers if s.id == myport][0]
     except IndexError:
         raise RuntimeError(
             "Server port {} must be included in list of available servers: {}".format(
                 myport, server_ports))
 
-    me.serve()
+    myserver.serve()
 
 if __name__ == "__main__":
-    import sys
-
-    myport = sys.argv[1]
-    start = sys.argv[2]
-    server_ports = sys.argv[3]
-
-    main(myport, start, server_ports)
+    main(sys.argv[1], sys.argv[2], json.loads(sys.argv[3]))
