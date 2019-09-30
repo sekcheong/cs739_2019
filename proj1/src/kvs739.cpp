@@ -2,12 +2,12 @@
 #include <vector>
 
 
-static kv_proxy *proxy_ = 0;
+static rpc_server *rpc_ = 0;
 
 static PyObject *py_init_callback_ = 0;
-static PyObject *py_shutdown_callback_ = 0;
 static PyObject *py_get_callback_ = 0;
 static PyObject *py_put_callback_ = 0;
+static PyObject *py_shutdown_callback_ = 0;
 
 //Provide a null-terminated array of server names (similarly to argv[]). 
 //Each server name has the format "host:port" and initialize the client code. 
@@ -316,6 +316,102 @@ static int init_callback(char** server_list) {
 	return ret;
 }
 
+
+static int get_callback(char* key, char* value) { 
+	DEBUG_PRINT("get_callback() [begin]");
+
+	if (!py_get_callback_) return -1;
+    
+    //If you are getting called back from another non-Python created 
+    //thread (i.e. a C/C++ thread receiving data on a socket), then 
+    //you MUST acquire Python's Global Interpreter Lock (GIL) before 
+    //calling any Python API functions.   
+
+    auto gstate = PyGILState_Ensure(); 
+    auto *arglist = Py_BuildValue("s", key); 
+
+    auto *result = PyObject_CallObject(py_get_callback_, arglist);
+    
+    Py_DECREF(arglist);
+    PyGILState_Release(gstate);
+
+    if (result==NULL) {
+        DEBUG_PRINT("get_callback() failed to invoke the callback function");
+        PyErr_Clear();
+        return -1;
+    }
+
+    int ret;
+    PyArg_ParseTuple(result, "i", &ret);
+
+	DEBUG_PRINT("get_callback() [end]");  
+
+	return ret;
+}
+
+
+static int put_callback(char* key, char* value, char* old_value) { 
+	DEBUG_PRINT("put_callback() [begin]");
+
+	if (!py_put_callback_) return -1;
+    
+    //If you are getting called back from another non-Python created 
+    //thread (i.e. a C/C++ thread receiving data on a socket), then 
+    //you MUST acquire Python's Global Interpreter Lock (GIL) before 
+    //calling any Python API functions.   
+
+    auto gstate = PyGILState_Ensure(); 
+    auto *arglist = Py_BuildValue("ss", key, value);
+
+    auto *result = PyObject_CallObject(py_put_callback_, arglist);
+    
+    Py_DECREF(arglist);
+    PyGILState_Release(gstate);
+
+    if (result==NULL) {
+        DEBUG_PRINT("put_callback() failed to invoke the callback function");
+        PyErr_Clear();
+        return -1;
+    }
+
+    int ret;
+    PyArg_ParseTuple(result, "i", &ret);
+
+	DEBUG_PRINT("put_callback() [end]");  
+
+	return ret;
+}
+
+
+static int shutdown_callback() { 
+	DEBUG_PRINT("shutdown_callback() [begin]");
+
+	if (!py_shutdown_callback_) return -1;
+    
+    //If you are getting called back from another non-Python created 
+    //thread (i.e. a C/C++ thread receiving data on a socket), then 
+    //you MUST acquire Python's Global Interpreter Lock (GIL) before 
+    //calling any Python API functions.   
+
+    auto gstate = PyGILState_Ensure(); 
+
+    auto *result = PyObject_CallObject(py_shutdown_callback_, NULL);
+    
+    PyGILState_Release(gstate);
+
+    if (result==NULL) {
+        DEBUG_PRINT("shutdown_callback() failed to invoke the callback function");
+        PyErr_Clear();
+        return -1;
+    }
+
+    int ret;
+    PyArg_ParseTuple(result, "i", &ret);
+
+	DEBUG_PRINT("shutdown_callback() [end]");  
+
+	return ret;
+}
 
 static PyObject *DataStore_new(PyTypeObject *type, PyObject *args, PyObject *kwds) {
 	DEBUG_PRINT("DataStore_new() [begin]");
@@ -973,10 +1069,13 @@ PyMODINIT_FUNC PyInit_kvs(void) {
 
     if (!module) return NULL;
 
-	if (!proxy_) {
-		proxy_ = new kv_proxy();
-		proxy_->set_init_callback(init_callback);
-		//kv739_set_proxy(proxy_);
+	if (!rpc_) {
+		rpc_ = new rpc_server(RPC_PORT);
+		rpc_->serve();
+		rpc_->set_init_callback(init_callback);
+		rpc_->set_put_callback(put_callback);
+		rpc_->set_get_callback(get_callback);
+		rpc_->set_shutdown_callback(shutdown_callback);
 	}
 
     if (PyType_Ready(&DataStoreType) < 0) return NULL;

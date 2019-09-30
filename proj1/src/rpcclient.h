@@ -1,5 +1,5 @@
-#ifndef CLIENT_H
-#define CLIENT_H
+#ifndef RPCCLIENT_H
+#define RPCCLIENT_H
 
 #include <string>
 #include <vector>

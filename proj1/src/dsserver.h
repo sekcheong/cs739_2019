@@ -1,5 +1,5 @@
-#ifndef SERVER_H
-#define SERVER_H
+#ifndef DSSERVER_H
+#define DSSERVER_H
 
 #include <sys/types.h> 
 #include <sys/uio.h>

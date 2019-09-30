@@ -1,5 +1,29 @@
-#include "rpcclient.h"
 #include <memory.h>
+#include "rpcclient.h"
+#include "exception.h"
+
+
+void args_pack(char** list, char *buff) {
+	int i=0;
+	char *p = buff;
+	while (list[i]!=0) {
+		int len = strlen(list[i]);
+		memcpy(p, list[i], len);
+		p[len] = '|';
+		p += (len+1);
+		i++;
+	}
+	p[-1]=0;
+}
+
+
+void args_print(char **list) {
+	int i=0;
+	while (list[i]!=0) {
+		printf("%d %s\n", i, list[i]);
+		i++;
+	}
+}
 
 rpc_client::rpc_client(int port) {
 	host_ = "localhost";
@@ -74,7 +98,8 @@ int rpc_client::get(const char *key, char *value) {
 		}
 		memcpy((void*)value, res.value(), res.get_value_size());
 	}
-	catch (...) {
+	catch (exception &ex) {
+		DEBUG_PRINT("rpc_client::get() request failed! Error:%s", ex.what());
 		return -1;
 	}
 
@@ -99,7 +124,8 @@ int rpc_client::put(const char *key, const char *value, const char *old_value) {
 		}
 		memcpy((void*)old_value, res.value(), res.get_value_size());
 	}
-	catch (...) {
+	catch (exception &ex) {
+		DEBUG_PRINT("rpc_client::put() request failed! Error:%s", ex.what());
 		return -1;
 	}
 
@@ -112,15 +138,22 @@ int rpc_client::init(char **servers) {
 	DEBUG_PRINT("rpc_client::init() [begin]");
 
 	try {
+
 		message res;
 		message msg(command::INIT);
+
+		char buffer[2048];
+		args_pack(servers, buffer);
+		int len = strlen(buffer);
+		msg.set_value(buffer, len);
 
 		send_message(msg, res);
 		if (res.get_command()!=command::OK) {
 			return -1;
 		}
 	}
-	catch (...) {
+	catch (exception &ex) {
+		DEBUG_PRINT("rpc_client::init() request failed! Error:%s", ex.what());
 		return -1;
 	}
 
@@ -141,7 +174,8 @@ int rpc_client::shutdown() {
 			return -1;
 		}
 	}
-	catch (...) {
+	catch (exception &ex) {
+		DEBUG_PRINT("rpc_client::shutdown() request failed! Error:%s", ex.what());
 		return -1;
 	}
 
