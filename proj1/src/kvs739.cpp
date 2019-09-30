@@ -502,7 +502,7 @@ static PyObject *DataStoreServer_new(PyTypeObject *type, PyObject *args, PyObjec
     		PyErr_SetString(PyExc_RuntimeError, "Invalid parameters");
     		return NULL;
     	}
-    	self->server_p = new server(host, port, dbfile);
+    	self->server_p = new dsserver(host, port, dbfile);
     }
     catch (exception &ex) {        
         PyErr_SetString(PyExc_RuntimeError, "Error creating DataStoreServer.");
@@ -536,7 +536,7 @@ static void DataStoreServer_dealloc(DataStoreServer* self) {
 
 static PyObject* DataStoreServer_serve(DataStoreServer *self, PyObject *args) {
 	try {
-		server *s = self->server_p;
+		dsserver *s = self->server_p;
 		s->serve();
 		Py_RETURN_NONE;
 	}
@@ -549,7 +549,7 @@ static PyObject* DataStoreServer_serve(DataStoreServer *self, PyObject *args) {
 
 static PyObject* DataStoreServer_stop(DataStoreServer *self, PyObject *args) {
 	try {
-		server *s = self->server_p;
+		dsserver *s = self->server_p;
 		s->stop();
 		Py_RETURN_NONE;
 	}
@@ -562,7 +562,7 @@ static PyObject* DataStoreServer_stop(DataStoreServer *self, PyObject *args) {
 
 static PyObject* DataStoreServer_running(DataStoreServer *self, PyObject *args) {
 	try {
-		server *s = self->server_p;
+		dsserver *s = self->server_p;
 		if (s->is_running()) {
 			Py_BuildValue("O", Py_True);
 		}
@@ -603,7 +603,7 @@ static PyObject *DataStoreClient_new(PyTypeObject *type, PyObject *args, PyObjec
     		PyErr_SetString(PyExc_RuntimeError, "Invalid parameters");
     		return NULL;
     	}
-    	self->client_p = new client(host, port);
+    	self->client_p = new dsclient(host, port);
     }
     catch (exception &ex) {        
         PyErr_SetString(PyExc_RuntimeError, "Error creating DataStoreClient.");

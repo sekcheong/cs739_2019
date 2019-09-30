@@ -1,7 +1,7 @@
 #include <iostream>
 #include <string>
 
-#include "client.h"
+#include "dsclient.h"
 
 int main(int argc, char *argv[]) {
 	
@@ -14,7 +14,7 @@ int main(int argc, char *argv[]) {
 	std::string host(argv[1]);
 	int port = atoi(argv[2]);
 
-	client c(host, port);
+	dsclient c(host, port);
 
 	std::cout << "Host: " << host << std::endl;
 	std::cout <<" Port: " << port << std::endl;

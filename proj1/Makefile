@@ -47,8 +47,8 @@ OBJ=	sqlite3.o \
 		sqlstatement.o \
 		datastore.o \
 		message.o \
-		server.o \
-		client.o \
+		dsserver.o \
+		dsclient.o \
 		kvproxy.o \
 		lib739kv.o \
 
@@ -59,7 +59,7 @@ EXEC =  kvdaemon \
 		server_test \
 		client_test \
 		api_test \
-		
+
 
 EXECOBJA = $(addprefix $(OBJDIR), $(EXEC))
 

@@ -12,8 +12,8 @@
 #include "lib739kv.h"
 #include "kvproxy.h"
 #include "datastore.h"
-#include "client.h"
-#include "server.h"
+#include "dsclient.h"
+#include "dsserver.h"
 #include "message.h"
 #include "strutil.h"
 
@@ -267,7 +267,7 @@ static PyTypeObject DataStoreType = {
 
 typedef struct {
     PyObject_HEAD    
-    server *server_p;
+    dsserver *server_p;
     PyObject *message_callback;
 } DataStoreServer;
 
@@ -346,7 +346,7 @@ static PyTypeObject DataStoreServerType = {
 
 typedef struct {
     PyObject_HEAD    
-    client *client_p;
+    dsclient *client_p;
     PyObject *frame_callback;
 } DataStoreClient;
 
