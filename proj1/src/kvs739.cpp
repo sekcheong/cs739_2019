@@ -139,16 +139,22 @@ static PyObject* kvs_init_handler(PyObject *self, PyObject *args) {
 
 
 static PyObject* kvs_put_handler(PyObject *self, PyObject *args) {
+	DEBUG_PRINT("kvs_put_handler() [begin]");
+	DEBUG_PRINT("kvs_put_handler() [end]");
 	Py_RETURN_NONE;
 }
 
 
 static PyObject* kvs_get_handler(PyObject *self, PyObject *args) {
+	DEBUG_PRINT("kvs_get_handler() [begin]");
+	DEBUG_PRINT("kvs_get_handler() [end]");
 	Py_RETURN_NONE;
 }
 
 
 static PyObject* kvs_shutdown_handler(PyObject *self, PyObject *args) {
+	DEBUG_PRINT("kvs_shutdown_handler() [begin]");
+	DEBUG_PRINT("kvs_shutdown_handler() [end]");
 	Py_RETURN_NONE;
 }
 
@@ -901,7 +907,7 @@ PyMODINIT_FUNC PyInit_kvs(void) {
 	if (!proxy_) {
 		proxy_ = new kv_proxy();
 		proxy_->set_init_callback(init_callback);
-		kv739_set_proxy(proxy_);
+		//kv739_set_proxy(proxy_);
 	}
 
     if (PyType_Ready(&DataStoreType) < 0) return NULL;

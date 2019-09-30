@@ -23,8 +23,14 @@ def on_shutdown():
 	print("on_shutdown()")
 	return 1
 
+
+
+#this is your service entry point which hooks up python code to APIs in 
 def main():
 	kvs.init_handler(on_init)
+	kvs.put_handler(on_put)
+	kvs.get_handler(on_get)
+	kvs.shutdown_handler(on_shutdown)
 	name = input("Press Enter to exit...")  
 	print()
 	return

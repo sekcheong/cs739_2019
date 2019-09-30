@@ -1,10 +1,9 @@
 #ifndef LIB739KB_H
 #define LIB739KB_H
 
-#include "kvproxy.h"
-
 #define MAX_KEY_SIZE   128
 #define MAX_VALUE_SIZE 2048
+#define RPC_PORT 511739
 
 //Provide a null-terminated array of server names (similarly to argv[]). 
 //Each server name has the format "host:port" and initialize the client code. 
@@ -25,10 +24,5 @@ int kv739_get(char * key, char * value);
 //Should return 0 on success if there is an old value, 1 on success if there was no old value, and -1 on failure. 
 //The old_value parameter must be at least one byte larger than the maximum value size. 
 int kv739_put(char * key, char * value, char * old_value);
-
-
-void kv739_set_proxy(kv_proxy *p);
-
-kv_proxy *kv739_get_proxy();
 
 #endif

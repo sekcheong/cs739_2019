@@ -23,6 +23,7 @@ enum class command: int32_t
 	GET_TS = 20,
 	GET_LAST_TS = 25,
 	GET_FIRST_TS = 26,
+	INIT = 998,
 	SHUT_DOWN = 999,
 	ERROR = -1,
 };

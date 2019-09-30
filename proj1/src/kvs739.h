@@ -101,7 +101,7 @@ static PyMethodDef module_methods[] = {
     {   
         "put_handler", 
         (PyCFunction) kvs_put_handler, 
-        METH_NOARGS,
+        METH_VARARGS,
         "Set the put handler"
     }, 
 
@@ -115,7 +115,7 @@ static PyMethodDef module_methods[] = {
     {   
         "shutdown_handler", 
         (PyCFunction) kvs_shutdown_handler, 
-        METH_NOARGS,
+        METH_VARARGS,
         "Set the shutdown handler"
     },
 
