@@ -10,12 +10,16 @@
 #include <string.h>
 
 #include "lib739kv.h"
+#include "kvproxy.h"
 #include "datastore.h"
-#include "client.h"
-#include "server.h"
+#include "dsclient.h"
+#include "dsserver.h"
 #include "message.h"
 #include "strutil.h"
 
+static PyObject* make_server_list(char** server_list);
+
+static int init_callback(char** server_list);
 
 //Provide a null-terminated array of server names (similarly to argv[]). 
 //Each server name has the format "host:port" and initialize the client code. 
@@ -40,6 +44,14 @@ static PyObject* kvs_put(PyObject *self, PyObject *args);
 //Get the OS timestamp in micro seconds
 static PyObject* kvs_timestamp(PyObject *self, PyObject *args);
 
+static PyObject* kvs_init_handler(PyObject *self, PyObject *args);
+
+static PyObject* kvs_put_handler(PyObject *self, PyObject *args);
+
+static PyObject* kvs_get_handler(PyObject *self, PyObject *args);
+
+static PyObject* kvs_shutdown_handler(PyObject *self, PyObject *args);
+
 
 PyMODINIT_FUNC PyInit_kvs(void);
 
@@ -50,18 +62,21 @@ static PyMethodDef module_methods[] = {
         METH_VARARGS,
         "Initialize the KVS with a list of sserver name. Each server name has the format \"host:port\" and initialize the client code."
     },  
+    
     {   
         "shutdown", 
         (PyCFunction) kvs_shutdown, 
         METH_NOARGS,
         "Shutdown the connection to a server and free state."
     }, 
+
     {   
         "get", 
         (PyCFunction) kvs_get, 
         METH_VARARGS,
         "Retrieve the value corresponding to the key."
     }, 
+    
     {   
         "put", 
         (PyCFunction) kvs_put, 
@@ -74,6 +89,34 @@ static PyMethodDef module_methods[] = {
         (PyCFunction) kvs_timestamp, 
         METH_NOARGS,
         "Get the OS timestamp in micro seconds."
+    },
+
+    {   
+        "init_handler", 
+        (PyCFunction) kvs_init_handler, 
+        METH_VARARGS,
+        "Set the init handler"
+    },  
+    
+    {   
+        "put_handler", 
+        (PyCFunction) kvs_put_handler, 
+        METH_NOARGS,
+        "Set the put handler"
+    }, 
+
+    {   
+        "get_handler", 
+        (PyCFunction) kvs_get_handler, 
+        METH_VARARGS,
+        "Set the get handler"
+    }, 
+    
+    {   
+        "shutdown_handler", 
+        (PyCFunction) kvs_shutdown_handler, 
+        METH_NOARGS,
+        "Set the shutdown handler"
     },
 
     {NULL, NULL, 0, NULL}
@@ -224,7 +267,7 @@ static PyTypeObject DataStoreType = {
 
 typedef struct {
     PyObject_HEAD    
-    server *server_p;
+    dsserver *server_p;
     PyObject *message_callback;
 } DataStoreServer;
 
@@ -301,10 +344,9 @@ static PyTypeObject DataStoreServerType = {
 };
 
 
-
 typedef struct {
     PyObject_HEAD    
-    client *client_p;
+    dsclient *client_p;
     PyObject *frame_callback;
 } DataStoreClient;
 
@@ -422,6 +464,57 @@ static PyTypeObject DataStoreClientType = {
     (initproc)DataStoreClient_init,  /* tp_init */
     0,                          /* tp_alloc */
     DataStoreClient_new,        /* tp_new */
+};
+
+typedef struct {
+    PyObject_HEAD
+    Py_ssize_t seq_index, enum_index;
+    PyObject *sequence;
+} DataStoreResultsState;
+
+static PyObject *DataStoreResults_new(PyTypeObject *type, PyObject *args, PyObject *kwargs);
+static void DataStoreResults_dealloc(DataStoreResultsState *rgstate);
+static PyObject *DataStoreResults_next(DataStoreResultsState *rgstate);
+
+PyTypeObject DataStoreResultsType = {
+    PyVarObject_HEAD_INIT(&PyType_Type, 0)
+    "DataStoreResults",             /* tp_name */
+    sizeof(DataStoreResultsState),            /* tp_basicsize */
+    0,                              /* tp_itemsize */
+    (destructor)DataStoreResults_dealloc,     /* tp_dealloc */
+    0,                              /* tp_print */
+    0,                              /* tp_getattr */
+    0,                              /* tp_setattr */
+    0,                              /* tp_reserved */
+    0,                              /* tp_repr */
+    0,                              /* tp_as_number */
+    0,                              /* tp_as_sequence */
+    0,                              /* tp_as_mapping */
+    0,                              /* tp_hash */
+    0,                              /* tp_call */
+    0,                              /* tp_str */
+    0,                              /* tp_getattro */
+    0,                              /* tp_setattro */
+    0,                              /* tp_as_buffer */
+    Py_TPFLAGS_DEFAULT,             /* tp_flags */
+    0,                              /* tp_doc */
+    0,                              /* tp_traverse */
+    0,                              /* tp_clear */
+    0,                              /* tp_richcompare */
+    0,                              /* tp_weaklistoffset */
+    PyObject_SelfIter,              /* tp_iter */
+    (iternextfunc)DataStoreResults_next,      /* tp_iternext */
+    0,                              /* tp_methods */
+    0,                              /* tp_members */
+    0,                              /* tp_getset */
+    0,                              /* tp_base */
+    0,                              /* tp_dict */
+    0,                              /* tp_descr_get */
+    0,                              /* tp_descr_set */
+    0,                              /* tp_dictoffset */
+    0,                              /* tp_init */
+    PyType_GenericAlloc,            /* tp_alloc */
+    DataStoreResults_new,           /* tp_new */
 };
 
 #endif

@@ -16,10 +16,10 @@
 #include "debug.h"
 #include "datastore.h"
 
-class client {
+class dsclient {
 public:
-	client(const std::string &host, int port);
-	virtual ~client();
+	dsclient(const std::string &host, int port);
+	virtual ~dsclient();
 	void send_message(const message &msg, message &response);
 	bool get(const char *key, char *value, int *len, int64_t *timestamp);
 	void put(const char *key, const char *value, int len, int64_t timestamp);

@@ -1,23 +1,23 @@
-#include "server.h"
+#include "dsserver.h"
 #include "message.h"
 #include "exception.h"
 
 
-server::server(const std::string &host, int port, const std::string &db_file) {
-	DEBUG_PRINT("server::server() [begin]");
-	DEBUG_PRINT("server::server() host=%s, port=%d", host.c_str(), port);
+dsserver::dsserver(const std::string &host, int port, const std::string &db_file) {
+	DEBUG_PRINT("dsserver::dsserver() [begin]");
+	DEBUG_PRINT("dsserver::dsserver() host=%s, port=%d", host.c_str(), port);
 
 	port_ = port;
 	host_ = host;
 	db_file_ = db_file;	
 	ds_ = new data_store(db_file.c_str());
 
-	DEBUG_PRINT("server::server() [end]");
+	DEBUG_PRINT("dsserver::dsserver() [end]");
 }
 
 
-server::~server() {
-	DEBUG_PRINT("server::~server() [begin]");
+dsserver::~dsserver() {
+	DEBUG_PRINT("dsserver::~dsserver() [begin]");
 	if (running_) {
 		stop();
 	}
@@ -26,18 +26,18 @@ server::~server() {
 		delete ds_;
 		ds_ = nullptr;
 	}
-	DEBUG_PRINT("server::~server() [end]");
+	DEBUG_PRINT("dsserver::~dsserver() [end]");
 }
 
 
-void server::serve() {
-	DEBUG_PRINT("server::serve() [begin]");
+void dsserver::serve() {
+	DEBUG_PRINT("dsserver::dsserver() [begin]");
     
     struct sockaddr_in serv_addr; 
  
  	sockfd_ = socket(AF_INET, SOCK_STREAM, 0);
     if (sockfd_ < 0) { 
-        throw exception("server::serve() Error opening socket", errno);
+        throw exception("dsserver::serve() Error opening socket", errno);
     }
 
     bzero((char *) &serv_addr, sizeof(serv_addr));
@@ -46,25 +46,25 @@ void server::serve() {
     serv_addr.sin_port = htons(port_);
 
     if (bind(sockfd_, (struct sockaddr *) &serv_addr, sizeof(serv_addr))!=0 ) {
-    	throw exception("server::serve() Error binding socket to port", errno);
+    	throw exception("dsserver::serve() Error binding socket to port", errno);
 	}
     
     if (listen(sockfd_, 5)!=0) {
-    	throw exception("server::serve() Error listening to socket", errno);
+    	throw exception("dsserver::serve() Error listening to socket", errno);
     }
 
 	running_ = true;
  	
- 	listening_thread_ = new std::thread(&server::connection_handler, this);
- 	processing_thread_ = new std::thread(&server::message_handler, this);
+ 	listening_thread_ = new std::thread(&dsserver::connection_handler, this);
+ 	processing_thread_ = new std::thread(&dsserver::message_handler, this);
 
-	DEBUG_PRINT("server::serve() [end]"); 	
+	DEBUG_PRINT("dsserver::serve() [end]"); 	
 
 }
 
 
-void server::connection_handler() {
-	DEBUG_PRINT("server::connection_handler() [begin]");
+void dsserver::connection_handler() {
+	DEBUG_PRINT("dsserver::connection_handler() [begin]");
 	
 	int newsockfd;
 	struct sockaddr_in cli_addr;
@@ -73,18 +73,18 @@ void server::connection_handler() {
     	newsockfd = accept(sockfd_, (struct sockaddr *) &cli_addr, &clilen);
     	if (!running_) break;
     	if (newsockfd < 0) {
-    		throw exception("server::serve() Error accepting connection", errno);
+    		throw exception("dsserver::serve() Error accepting connection", errno);
     	}
     	conns_.enqueue(newsockfd);
 	}
 
-	DEBUG_PRINT("server::connection_handler() [end]");
+	DEBUG_PRINT("dsserver::connection_handler() [end]");
 }
 
 
-void server::message_handler() {
+void dsserver::message_handler() {
 
-	DEBUG_PRINT("server::message_handler() [begin]");
+	DEBUG_PRINT("dsserver::message_handler() [begin]");
 
 	while (running_) {
 
@@ -102,13 +102,13 @@ void server::message_handler() {
 			int n = recv(sockfd, (void *) &msg, len, MSG_WAITALL);
 
 			if (n < len) {
-				DEBUG_PRINT("server::message_handler() Error reading message");
+				DEBUG_PRINT("dsserver::message_handler() Error reading message");
 			}
 
 			switch (msg.get_command()) {
 					
 				case command::CHK: {
-						DEBUG_PRINT("server::message_handler(): key=%s", msg.key());
+						DEBUG_PRINT("dsserver::message_handler(): key=%s", msg.key());
 						message res;
 						res.set_command(command::OK);
 						send(sockfd, (void *) &res, sizeof(message), 0);
@@ -121,7 +121,7 @@ void server::message_handler() {
 					break;
 
     			case command::GET: {
-						DEBUG_PRINT("server::message_handler(): GET: key=%s", msg.key());
+						DEBUG_PRINT("dsserver::message_handler(): GET: key=%s", msg.key());
 						message res;
 						int64_t ts = 0;
 						try {
@@ -130,17 +130,17 @@ void server::message_handler() {
 								res.set_value(buff, buff_len);
 								res.set_value_timestamp(ts);
 								res.set_command(command::OK);
-								DEBUG_PRINT("server::message_handler(): GET: OK");
+								DEBUG_PRINT("dsserver::message_handler(): GET: OK");
 							}
 							else {
-								DEBUG_PRINT("server::message_handler(): GET: NoVal");
+								DEBUG_PRINT("dsserver::message_handler(): GET: NoVal");
 								res.set_command(command::NO_VAL);
 							}
 
 						}
 						catch (exception &ex) {
 							res.set_command(command::ERROR);
-							DEBUG_PRINT("server::message_handler(): GET: Error %s", ex.what());
+							DEBUG_PRINT("dsserver::message_handler(): GET: Error %s", ex.what());
 						}
 						send(sockfd, (void *) &res, sizeof(message), 0);
 					}
@@ -148,7 +148,7 @@ void server::message_handler() {
 
     			case command::PUT: {
 
-						DEBUG_PRINT("server::message_handler(): PUT: key=%s, value=%s, timestamp=%d", msg.key(), msg.get_value_string().c_str(), msg.get_value_timestamp());
+						DEBUG_PRINT("dsserver::message_handler(): PUT: key=%s, value=%s, timestamp=%d", msg.key(), msg.get_value_string().c_str(), msg.get_value_timestamp());
 						message res;
 						try {
 							buff_len = sizeof(buff);
@@ -161,13 +161,13 @@ void server::message_handler() {
 							else {
 								res.clear();
 								res.set_command(command::ERROR);
-								DEBUG_PRINT("server::message_handler(): PUT: Returns FALSE!");
+								DEBUG_PRINT("dsserver::message_handler(): PUT: Returns FALSE!");
 							}
 						}
 						catch (exception &ex) {
 							res.clear();
 							res.set_command(command::ERROR);
-							DEBUG_PRINT("server::message_handler(): PUT: Error %s", ex.what());
+							DEBUG_PRINT("dsserver::message_handler(): PUT: Error %s", ex.what());
 						}
 
 						send(sockfd, (void *) &res, sizeof(message), 0);
@@ -183,31 +183,31 @@ void server::message_handler() {
 					break;
 
 				case command::GET_META: {
-						DEBUG_PRINT("server::message_handler(): GET_META: key=%s", msg.key());
+						DEBUG_PRINT("dsserver::message_handler(): GET_META: key=%s", msg.key());
 						message res;
 						try {
 							buff_len = sizeof(buff);
 							if (ds_->get_meta(msg.key(), buff, &buff_len)) {
 								res.set_value(buff, buff_len);
 								res.set_command(command::OK);
-								DEBUG_PRINT("server::message_handler(): GET_META: OK");
+								DEBUG_PRINT("dsserver::message_handler(): GET_META: OK");
 							}
 							else {
-								DEBUG_PRINT("server::message_handler(): GET_META: NoVal");
+								DEBUG_PRINT("dsserver::message_handler(): GET_META: NoVal");
 								res.set_command(command::NO_VAL);
 							}
 
 						}
 						catch (exception &ex) {
 							res.set_command(command::ERROR);
-							DEBUG_PRINT("server::message_handler(): GET_META: Error %s", ex.what());
+							DEBUG_PRINT("dsserver::message_handler(): GET_META: Error %s", ex.what());
 						}
 						send(sockfd, (void *) &res, sizeof(message), 0);
 					}
 					break;
 
 				case command::PUT_META:{
-						DEBUG_PRINT("server::message_handler(): PUT_META: key=%s, value=%s", msg.key(), msg.get_value_string().c_str());
+						DEBUG_PRINT("dsserver::message_handler(): PUT_META: key=%s, value=%s", msg.key(), msg.get_value_string().c_str());
 						message res;
 						try {
 							buff_len = sizeof(buff);
@@ -220,20 +220,20 @@ void server::message_handler() {
 							else {
 								res.clear();
 								res.set_command(command::ERROR);
-								DEBUG_PRINT("server::message_handler(): PUT_META: Returns FALSE!");
+								DEBUG_PRINT("dsserver::message_handler(): PUT_META: Returns FALSE!");
 							}
 						}
 						catch (exception &ex) {
 							res.clear();
 							res.set_command(command::ERROR);
-							DEBUG_PRINT("server::message_handler(): PUT_META: Error %s", ex.what());
+							DEBUG_PRINT("dsserver::message_handler(): PUT_META: Error %s", ex.what());
 						}
 						send(sockfd, (void *) &res, sizeof(message), 0);
 					}
 					break;
 
 				case command::GET_TS:{
-						DEBUG_PRINT("server::message_handler(): GET_TS");
+						DEBUG_PRINT("dsserver::message_handler(): GET_TS");
 						message res;
 						try {
 							buff_len = sizeof(buff);
@@ -244,14 +244,14 @@ void server::message_handler() {
 						catch (exception &ex) {
 							res.clear();
 							res.set_command(command::ERROR);
-							DEBUG_PRINT("server::message_handler(): GET_TS: Error %s", ex.what());
+							DEBUG_PRINT("dsserver::message_handler(): GET_TS: Error %s", ex.what());
 						}
 						send(sockfd, (void *) &res, sizeof(message), 0);
 					}
 					break;
 
 				case command::GET_LAST_TS:{
-						DEBUG_PRINT("server::message_handler(): GET_LAST_TS");
+						DEBUG_PRINT("dsserver::message_handler(): GET_LAST_TS");
 						message res;
 						try {
 							buff_len = sizeof(buff);
@@ -262,14 +262,14 @@ void server::message_handler() {
 						catch (exception &ex) {
 							res.clear();
 							res.set_command(command::ERROR);
-							DEBUG_PRINT("server::message_handler(): GET_LAST_TS: Error %s", ex.what());
+							DEBUG_PRINT("dsserver::message_handler(): GET_LAST_TS: Error %s", ex.what());
 						}
 						send(sockfd, (void *) &res, sizeof(message), 0);
 					}
 					break;
 
 				case command::GET_FIRST_TS:{
-						DEBUG_PRINT("server::message_handler(): GET_FIRST_TS");
+						DEBUG_PRINT("dsserver::message_handler(): GET_FIRST_TS");
 						message res;
 						try {
 							buff_len = sizeof(buff);
@@ -280,7 +280,7 @@ void server::message_handler() {
 						catch (exception &ex) {
 							res.clear();
 							res.set_command(command::ERROR);
-							DEBUG_PRINT("server::message_handler(): GET_FIRST_TS: Error %s", ex.what());
+							DEBUG_PRINT("dsserver::message_handler(): GET_FIRST_TS: Error %s", ex.what());
 						}
 						send(sockfd, (void *) &res, sizeof(message), 0);
 					}
@@ -298,13 +298,13 @@ void server::message_handler() {
 
 	}
 
-	DEBUG_PRINT("server::message_handler() [end]");	
+	DEBUG_PRINT("dsserver::message_handler() [end]");	
 }
 
 
-void server::stop() {
+void dsserver::stop() {
 
-	DEBUG_PRINT("server::stop() [begin]");	
+	DEBUG_PRINT("dsserver::stop() [begin]");	
 
 	//flag the system ready to shutdown
 	running_ = false;
@@ -315,11 +315,11 @@ void server::stop() {
 	//This will wake up any threads blocked on it, while keeping the file descriptor valid.
 	shutdown(sockfd_, SHUT_RDWR);
 
-	DEBUG_PRINT("server::stop() [end]");	
+	DEBUG_PRINT("dsserver::stop() [end]");	
 }
 
 
-bool server::is_running() {
+bool dsserver::is_running() {
 	return running_;
 }
 

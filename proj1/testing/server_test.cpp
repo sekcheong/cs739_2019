@@ -1,13 +1,13 @@
 #include <iostream>
 #include <string>
 
-#include "server.h"
+#include "dsserver.h"
 
 int main() {
 	std::cout << "Enter 'q' to stop...";
 	std::string host = "localhost";
 	std::string dbfile = "test.db";
-	server s(host, 52123, dbfile);
+	dsserver s(host, 52123, dbfile);
 	s.serve();
 
 	while (1) {

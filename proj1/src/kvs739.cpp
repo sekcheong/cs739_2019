@@ -1,5 +1,14 @@
 #include "kvs739.h"
 #include <vector>
+
+
+static kv_proxy *proxy_ = 0;
+
+static PyObject *py_init_callback_ = 0;
+static PyObject *py_shutdown_callback_ = 0;
+static PyObject *py_get_callback_ = 0;
+static PyObject *py_put_callback_ = 0;
+
 //Provide a null-terminated array of server names (similarly to argv[]). 
 //Each server name has the format "host:port" and initialize the client code. 
 //Returns 0 on success and -1 on failure. 
@@ -101,8 +110,135 @@ static PyObject* kvs_timestamp(PyObject *self, PyObject *args) {
 }
 
 
+
+static PyObject* kvs_init_handler(PyObject *self, PyObject *args) {
+	DEBUG_PRINT("kvs_init_handler() [begin]");
+	PyObject *cb;
+    
+    if (!PyArg_ParseTuple(args, "O", &cb)) {
+    	PyErr_SetString(PyExc_RuntimeError, "Invalid parameters"); 
+    	return NULL;
+    }
+
+    if (cb == Py_None) {
+    	Py_XDECREF(py_init_callback_);
+    	py_init_callback_ = 0;
+        Py_RETURN_NONE;
+    }
+    
+    if (!PyCallable_Check(cb)) {
+        PyErr_SetString(PyExc_TypeError, "parameter must be callable");
+        return NULL;
+    }
+
+	Py_XINCREF(cb); 
+	py_init_callback_ = cb;
+	DEBUG_PRINT("kvs_init_handler() [end]");
+	Py_RETURN_NONE;
+}
+
+
+static PyObject* kvs_put_handler(PyObject *self, PyObject *args) {
+	Py_RETURN_NONE;
+}
+
+
+static PyObject* kvs_get_handler(PyObject *self, PyObject *args) {
+	Py_RETURN_NONE;
+}
+
+
+static PyObject* kvs_shutdown_handler(PyObject *self, PyObject *args) {
+	Py_RETURN_NONE;
+}
+
+
 static int DataStore_init(DataStore *self, PyObject *args, PyObject *kwds) {
 	return 0;
+}
+
+
+static PyObject* make_server_list(char** server_list) {
+	
+	if (!server_list) {
+		Py_RETURN_NONE;
+	}
+
+
+	auto* p = PyList_New(100);
+    if (p==NULL) {
+        PyErr_SetString(PyExc_RuntimeError, "unable to allocate server list object");   
+        Py_RETURN_NONE;
+    }
+    // auto* k = Py_BuildValue("s","name");
+    // auto* v = Py_BuildValue("s", info->name().c_str());    
+    // PyDict_SetItem(p, k, v);
+
+    // k = Py_BuildValue("s","model");
+    // v = Py_BuildValue("s", info->model().c_str());    
+    // PyDict_SetItem(p, k, v);
+
+    // k = Py_BuildValue("s","serial");
+    // v = Py_BuildValue("s", info->serial().c_str());    
+    // PyDict_SetItem(p, k, v); 
+
+    // k = Py_BuildValue("s","vendor");
+    // v = Py_BuildValue("s", info->vendor().c_str());    
+    // PyDict_SetItem(p, k, v);
+
+    // k = Py_BuildValue("s","device_class");
+    // v = Py_BuildValue("s", info->device_class().c_str());
+    // PyDict_SetItem(p, k, v);
+
+    // k = Py_BuildValue("s","version");
+    // v = Py_BuildValue("s", info->version().c_str());
+    // PyDict_SetItem(p, k, v);
+
+    // k = Py_BuildValue("s","index");
+    // v = Py_BuildValue("i", info->index());
+    // PyDict_SetItem(p, k, v);
+    
+
+	int i = 0;
+	std::vector<char*> l;
+	while (server_list[i]) {
+		l.push_back(server_list[i]);
+		i++;
+	}
+}
+
+
+static int init_callback(char** server_list) { 
+	DEBUG_PRINT("init_callback() [begin]");
+
+	if (!py_init_callback_) return -1;
+    
+    //If you are getting called back from another non-Python created 
+    //thread (i.e. a C/C++ thread receiving data on a socket), then 
+    //you MUST acquire Python's Global Interpreter Lock (GIL) before 
+    //calling any Python API functions.   
+
+	auto *sl = make_server_list(server_list);
+    auto gstate = PyGILState_Ensure(); 
+    auto *arglist = Py_BuildValue("O", sl); 
+
+    auto *result = PyObject_CallObject(py_init_callback_, arglist);
+    
+    Py_DECREF(arglist);
+    PyGILState_Release(gstate);
+
+    if (result==NULL) {
+        DEBUG_PRINT("init_callback() failed to invoke the callback function");
+        PyErr_Clear();
+        return -1;
+    }
+
+    int ret;
+    PyArg_ParseTuple(result, "i", &ret);
+
+	DEBUG_PRINT("init_callback() [end]");  
+
+	return ret;
 }
 
 
@@ -366,7 +502,7 @@ static PyObject *DataStoreServer_new(PyTypeObject *type, PyObject *args, PyObjec
     		PyErr_SetString(PyExc_RuntimeError, "Invalid parameters");
     		return NULL;
     	}
-    	self->server_p = new server(host, port, dbfile);
+    	self->server_p = new dsserver(host, port, dbfile);
     }
     catch (exception &ex) {        
         PyErr_SetString(PyExc_RuntimeError, "Error creating DataStoreServer.");
@@ -400,7 +536,7 @@ static void DataStoreServer_dealloc(DataStoreServer* self) {
 
 static PyObject* DataStoreServer_serve(DataStoreServer *self, PyObject *args) {
 	try {
-		server *s = self->server_p;
+		dsserver *s = self->server_p;
 		s->serve();
 		Py_RETURN_NONE;
 	}
@@ -413,7 +549,7 @@ static PyObject* DataStoreServer_serve(DataStoreServer *self, PyObject *args) {
 
 static PyObject* DataStoreServer_stop(DataStoreServer *self, PyObject *args) {
 	try {
-		server *s = self->server_p;
+		dsserver *s = self->server_p;
 		s->stop();
 		Py_RETURN_NONE;
 	}
@@ -426,7 +562,7 @@ static PyObject* DataStoreServer_stop(DataStoreServer *self, PyObject *args) {
 
 static PyObject* DataStoreServer_running(DataStoreServer *self, PyObject *args) {
 	try {
-		server *s = self->server_p;
+		dsserver *s = self->server_p;
 		if (s->is_running()) {
 			Py_BuildValue("O", Py_True);
 		}
@@ -467,7 +603,7 @@ static PyObject *DataStoreClient_new(PyTypeObject *type, PyObject *args, PyObjec
     		PyErr_SetString(PyExc_RuntimeError, "Invalid parameters");
     		return NULL;
     	}
-    	self->client_p = new client(host, port);
+    	self->client_p = new dsclient(host, port);
     }
     catch (exception &ex) {        
         PyErr_SetString(PyExc_RuntimeError, "Error creating DataStoreClient.");
@@ -672,6 +808,7 @@ static PyObject* DataStoreClient_timestamp(DataStoreClient *self, PyObject *args
 	}
 }
 
+
 static PyObject* DataStoreClient_shutdown_server(DataStoreClient *self, PyObject *args) {
 	
 	if (PyTuple_Size(args)!=0) {
@@ -691,6 +828,61 @@ static PyObject* DataStoreClient_shutdown_server(DataStoreClient *self, PyObject
 }
 
 
+static PyObject *DataStoreResults_new(PyTypeObject *type, PyObject *args, PyObject *kwargs) {
+
+ 	// PyObject *sequence;
+
+  //   if (!PyArg_UnpackTuple(args, "revgen", 1, 1, &sequence))
+  //       return NULL;
+
+  //   /* We expect an argument that supports the sequence protocol */
+  //   if (!PySequence_Check(sequence)) {
+  //       PyErr_SetString(PyExc_TypeError, "revgen() expects a sequence");
+  //       return NULL;
+  //   }
+
+  //   Py_ssize_t len = PySequence_Length(sequence);
+  //   if (len == -1)
+  //       return NULL;
+
+  //   /* Create a new RevgenState and initialize its state - pointing to the last
+  //    * index in the sequence.
+  //   */
+    DataStoreResultsState *rgstate = (DataStoreResultsState *)type->tp_alloc(type, 0);
+    if (!rgstate) {
+        return NULL;
+    }
+
+
+	// cons_cell *cons = PyObject_NEW(cons_cell, &cons_type);
+ //    if(cons) {
+ //        cons->car = car; Py_INCREF(car);   INCREF when holding a PyObject* 
+ //        cons->cdr = cdr; Py_INCREF(cdr);  /* ditto */
+ //    }
+ //    return cons;
+    // Py_INCREF(sequence);
+    // rgstate->sequence = sequence;
+    // rgstate->seq_index = len - 1;
+    // rgstate->enum_index = 0;
+
+    return (PyObject *)rgstate;
+	Py_RETURN_NONE;
+}
+
+
+static void DataStoreResults_dealloc(DataStoreResultsState *rgstate) {
+	// We need XDECREF here because when the generator is exhausted,
+    // rgstate->sequence is cleared with Py_CLEAR which sets it to NULL.
+    Py_XDECREF(rgstate->sequence);
+    Py_TYPE(rgstate)->tp_free(rgstate);
+}
+
+
+static PyObject *DataStoreResults_next(DataStoreResultsState *rgstate) {
+	Py_RETURN_NONE;
+}
+
+
 static struct PyModuleDef kvsmodule = {
     PyModuleDef_HEAD_INIT,
     "kvs",
@@ -701,9 +893,16 @@ static struct PyModuleDef kvsmodule = {
 
 
 PyMODINIT_FUNC PyInit_kvs(void) {
+	DEBUG_PRINT("PyInit_kvs() [begin]");
     PyObject* module = PyModule_Create(&kvsmodule);
 
     if (!module) return NULL;
+
+	if (!proxy_) {
+		proxy_ = new kv_proxy();
+		proxy_->set_init_callback(init_callback);
+		kv739_set_proxy(proxy_);
+	}
 
     if (PyType_Ready(&DataStoreType) < 0) return NULL;
     Py_INCREF(&DataStoreType);
@@ -716,5 +915,16 @@ PyMODINIT_FUNC PyInit_kvs(void) {
     if (PyType_Ready(&DataStoreClientType) < 0) return NULL;
     Py_INCREF(&DataStoreClientType);
     PyModule_AddObject(module, "DataStoreClient", (PyObject *)&DataStoreClientType);
+
+    if (PyType_Ready(&DataStoreResultsType) < 0) return NULL;
+    Py_INCREF(&DataStoreResultsType);
+    PyModule_AddObject(module, "DataStoreResults", (PyObject *)&DataStoreResultsType);
+
+    // Make sure the GIL has been created since we need to acquire it in our
+    // callback to safely call into the python application.
+    if (! PyEval_ThreadsInitialized()) {
+        PyEval_InitThreads();
+    } 
+    DEBUG_PRINT("PyInit_kvs() [end]");
     return module;
 }

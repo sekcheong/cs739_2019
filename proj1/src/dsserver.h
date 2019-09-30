@@ -16,11 +16,11 @@
 #include "queue.h"
 #include "datastore.h"
 
-class server {
+class dsserver {
 
 public:
-	server(const std::string &host, int port, const std::string &db_file);
-	virtual ~server();
+	dsserver(const std::string &host, int port, const std::string &db_file);
+	virtual ~dsserver();
 	void serve();
 	void connection_handler();
 	void message_handler();

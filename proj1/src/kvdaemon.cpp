@@ -12,7 +12,7 @@
 
 #include "debug.h"
 #include "exception.h"
-#include "server.h"
+#include "dsserver.h"
 #include "stdlib.h"
 #include "stdio.h"
 
@@ -144,7 +144,7 @@ int main(int argc, char *argv[]) {
 	std::string file(argv[3]);
 
 	try {
-		server s(host, port, file);
+		dsserver s(host, port, file);
 		s.serve();
 		sleep(1);
 		while (true) {
