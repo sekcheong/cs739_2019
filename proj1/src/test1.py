@@ -20,7 +20,8 @@ def main(servers):
     kvlib.shutdown()
 
 if __name__ == "__main__":
-    try:
-        main(json.loads(sys.argv[1]))
-    finally:
-        kvlib.shutdown()
+    main(json.loads(sys.argv[1]))
+    # try:
+    #     main(json.loads(sys.argv[1]))
+    # finally:
+    #     kvlib.shutdown()

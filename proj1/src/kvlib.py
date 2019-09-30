@@ -20,7 +20,11 @@ def init(svr_list):
     """Set active server list."""
 
     global SERVERS
-    SERVERS = [x.split(":") for x in svr_list]
+
+    for server in svr_list:
+        server = server.split(":")
+        server[1] = int(server[1])
+        SERVERS.append(tuple(server))
 
 def shutdown():
     """Gracefully kill all servers."""
@@ -74,7 +78,6 @@ def connected(sock, target=None):
 
     while not connected and (SERVERS or target):
         server = target or random.choice(SERVERS)
-        server = (server[0], int(server[1]))
 
         try:
             sock.connect(server)
@@ -99,7 +102,7 @@ def put(k, v, old_val=None):
     sock = s.socket(s.AF_INET, s.SOCK_STREAM)
 
     print("client_put(k, v): " + client_put(k, v))
-    print("loads(client_put(k, v)): " + json.loads(client_put(k, v)))
+    print("loads(client_put(k, v)): " + str(json.loads(client_put(k, v))))
 
     status = None
     if connected(sock):

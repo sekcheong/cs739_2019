@@ -240,7 +240,7 @@ class KvServer:
             msg_in += data
             received = len(data)
 
-        request = json.loads(msg_in)
+        request = json.loads(str(msg_in, encoding="ascii"))
         xmit = lambda x: sock.sendall(json.dumps(x))
 
         if request[0] == Action.GET:
