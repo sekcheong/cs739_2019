@@ -2,12 +2,12 @@
 #include <vector>
 
 
-static kv_proxy *proxy_ = nullptr;
+static kv_proxy *proxy_ = 0;
 
-static PyObject *py_init_callback_ = nullptr;
-static PyObject *py_shutdown_callback_ = nullptr;
-static PyObject *py_get_callback_ = nullptr;
-static PyObject *py_put_callback_ = nullptr;
+static PyObject *py_init_callback_ = 0;
+static PyObject *py_shutdown_callback_ = 0;
+static PyObject *py_get_callback_ = 0;
+static PyObject *py_put_callback_ = 0;
 
 //Provide a null-terminated array of server names (similarly to argv[]). 
 //Each server name has the format "host:port" and initialize the client code. 
@@ -112,34 +112,29 @@ static PyObject* kvs_timestamp(PyObject *self, PyObject *args) {
 
 
 static PyObject* kvs_init_handler(PyObject *self, PyObject *args) {
-	PyObject *temp;
+	DEBUG_PRINT("kvs_init_handler() [begin]");
+	PyObject *cb;
     
-    if (!PyArg_ParseTuple(args, "O", &temp)) {
+    if (!PyArg_ParseTuple(args, "O", &cb)) {
     	PyErr_SetString(PyExc_RuntimeError, "Invalid parameters"); 
     	return NULL;
     }
 
-    if (temp == Py_None) {
-        //set_callback(self, 0);
+    if (cb == Py_None) {
+    	Py_XDECREF(py_init_callback_);
+    	py_init_callback_ = 0;
         Py_RETURN_NONE;
     }
     
-    if (!PyCallable_Check(temp)) {
+    if (!PyCallable_Check(cb)) {
         PyErr_SetString(PyExc_TypeError, "parameter must be callable");
         return NULL;
     }
 
-    Py_RETURN_NONE;
-    
- //    if (self->frame_callback!=0) {
- //        Py_XDECREF(self->frame_callback);     // Dispose of previous callback 
- //        self->frame_callback = 0;
- //    }
- //    if (callback!=0) {
- //        Py_XINCREF(callback); 
- //        self->frame_callback = callback;      // Remember new callback    
- //    }
-
+	Py_XINCREF(cb); 
+	py_init_callback_ = cb;
+	DEBUG_PRINT("kvs_init_handler() [end]");
+	Py_RETURN_NONE;
 }
 
 
@@ -898,12 +893,14 @@ static struct PyModuleDef kvsmodule = {
 
 
 PyMODINIT_FUNC PyInit_kvs(void) {
+	DEBUG_PRINT("PyInit_kvs() [begin]");
     PyObject* module = PyModule_Create(&kvsmodule);
 
     if (!module) return NULL;
 
 	if (!proxy_) {
 		proxy_ = new kv_proxy();
+		proxy_->set_init_callback(init_callback);
 		kv739_set_proxy(proxy_);
 	}
 
@@ -928,5 +925,6 @@ PyMODINIT_FUNC PyInit_kvs(void) {
     if (! PyEval_ThreadsInitialized()) {
         PyEval_InitThreads();
     } 
+    DEBUG_PRINT("PyInit_kvs() [end]");
     return module;
 }

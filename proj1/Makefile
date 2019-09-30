@@ -31,6 +31,7 @@ else
 	OPTS=-Ofast -DNDEBUG 
 endif
 
+
 #for MacOS clang we need to add libc++
 ifeq ($(UNAME),Darwin)
 	CPP += -stdlib=libc++
@@ -51,13 +52,14 @@ OBJ=	sqlite3.o \
 		kvproxy.o \
 		lib739kv.o \
 
+
 #list of executable to build
 EXEC =  kvdaemon \
-		kvservice \
 		test \
 		server_test \
 		client_test \
 		api_test \
+		
 
 EXECOBJA = $(addprefix $(OBJDIR), $(EXEC))
 
