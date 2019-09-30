@@ -1,6 +1,7 @@
 #include "rpcserver.h"
 #include "message.h"
 #include "exception.h"
+#include <string.h>
 
 
 void args_unpack(char **list, char *buff) {
