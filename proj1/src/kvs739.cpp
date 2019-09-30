@@ -67,7 +67,7 @@ static PyObject* kvs_get(PyObject *self, PyObject *args) {
 		return NULL;
     }
 
-	char value[2048] = {0};
+	char value[MAX_VALUE_SIZE] = {0};
 	if (kv739_get(key, value)==1) {
 		return Py_BuildValue("s", value);
 	}
@@ -219,7 +219,9 @@ static PyObject* kvs_shutdown_handler(PyObject *self, PyObject *args) {
 
 	Py_XINCREF(cb); 
 	py_shutdown_callback_ = cb;
-
+	
+	//https://stackoverflow.com/questions/1796510/accessing-a-python-traceback-from-the-c-api
+	
 	DEBUG_PRINT("kvs_shutdown_handler() [end]");
 	Py_RETURN_NONE;
 }
