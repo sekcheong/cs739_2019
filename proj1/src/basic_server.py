@@ -90,19 +90,20 @@ class KvServer:
         self.live = 1
         self.sock = 0 # configured in self.serve()
 
-        self.db = sqlite_db(self.id)
+        self.db = sqlite_db(self.id, autocommit = True)
         self.db.begin()
 
         try:
-            self.kvs = self.db["kvs"]
+            self.kvs = { x: KvEntry(*y) for x, y in self.db["kvs"].items() }
         except KeyError:
             self.kvs = dict()
 
         for port in allServers:
             try:
-                self.server_updates[str(port)] = self.db["servers"][str(port)]
+                self.server_updates[str(port)] = float(self.db["servers"][str(port)])
             except KeyError:
-                self.server_updates[str(port)] = start
+                self.server_updates[str(port)] = float(start)
+
 
     def __repr__(self):
         return ("{}: {} {}\n    {}".format(
@@ -116,15 +117,15 @@ class KvServer:
         """Save database, close socket, mark self as ded so we stop serving."""
 
         self.save_db()
+        self.db.save()
         self.sock.close()
         self.live = 0
 
     def save_db(self):
         """Save state to db."""
 
-        # self.db["servers"] = self.server_updates
-        # self.db["kvs"] = self.kvs
-        # self.db.save()
+        self.db["servers"] = self.server_updates
+        self.db["kvs"] = { x: y.asplode() for x, y in self.kvs.items() }
 
     def insert(self, key, value, time=None):
         """Insert new value into the kv-store."""
@@ -144,6 +145,7 @@ class KvServer:
 
         self.kvs[key] = KvEntry(key, value, time)
         self.server_updates[self.id] = time
+
         self.save_db() # save before contacting any number of remote servers
 
         self.sync_bidi(key, value, time)
@@ -166,8 +168,8 @@ class KvServer:
     def sync_bidi(self, k, v, t):
         """Sync new key to other servers, update self with their new values."""
 
-        for server in KvServer.servers:
-            if server.live and server.id != self.id:
+        for server in self.server_updates.keys():
+            if server != self.id:
                 self.update(server, self.send_kv(server, k, v, t))
 
     def update(self, server, replay):
@@ -186,7 +188,7 @@ class KvServer:
                 newer_keys.append(kve)
 
         try:
-            self.server_updates[server.id] = max([x[2] for x in replay])
+            self.server_updates[server] = max([x[2] for x in replay])
         except ValueError:
             # nothing to replay, so the server's update time is already caught up.
             pass
@@ -205,7 +207,7 @@ class KvServer:
         # open connection
         sock = s.socket(s.AF_INET, s.SOCK_STREAM)
         try:
-            sock.connect(("localhost", int(server.id)))
+            sock.connect(("localhost", int(server)))
             sock.settimeout(20) # FIXME remove
         except ConnectionRefusedError:
             # server down
@@ -297,15 +299,12 @@ class KvServer:
 def main(myport, start, server_ports):
     """Load server list and start serving."""
 
-    KvServer.servers = [KvServer(port, server_ports, int(start)) for port in server_ports]
-
-    try:
-        myserver = [s for s in KvServer.servers if s.id == myport][0]
-    except IndexError:
+    if myport not in server_ports:
         raise RuntimeError(
             "Server port {} must be included in list of available servers: {}".format(
                 myport, server_ports))
 
+    myserver = KvServer(myport, server_ports, start)
     myserver.serve()
 
 if __name__ == "__main__":

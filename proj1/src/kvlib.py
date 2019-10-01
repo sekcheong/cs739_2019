@@ -31,10 +31,9 @@ def shutdown():
     """Gracefully kill all servers."""
 
     global SERVERS
-    shutdowns = SERVERS
 
-    for server in shutdowns:
-        kill(server)
+    for server in SERVERS:
+        kill(server, 0)
         subprocess.run(["kill", server_pid(server)])
 
 def server_pid(server):
@@ -57,7 +56,7 @@ def server_pid(server):
 
     return 0
 
-def kill(server):
+def kill(server, forget = 1):
     """Make server ``(host, port)`` unconnectable."""
 
     global SERVERS
@@ -68,7 +67,8 @@ def kill(server):
         sock.shutdown(s.SHUT_RDWR)
         sock.close()
 
-    SERVERS.remove(server)
+    if forget:
+        SERVERS.remove(server)
 
 def start(server):
     """Make server ``(host, port)`` available."""
@@ -127,8 +127,9 @@ def connect(target=None):
 
     while not sock and (SERVERS or target):
         server = target or random.choice(SERVERS)
+        server = SERVERS[0] # FIXME remove
         sock = s.socket(s.AF_INET, s.SOCK_STREAM)
-        sock.settimeout(20) # FIXME remove
+        # sock.settimeout(20) # FIXME remove
 
         try:
             sock.connect(server)
