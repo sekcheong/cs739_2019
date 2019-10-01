@@ -45,3 +45,4 @@ test
 *_test
 kvdaemon
 kvservice
+*.sqlite3
