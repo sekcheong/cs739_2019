@@ -49,7 +49,6 @@ OBJ=	sqlite3.o \
 		message.o \
 		dsserver.o \
 		dsclient.o \
-		kvproxy.o \
 		lib739kv.o \
 		rpcclient.o \
 		rpcserver.o \
@@ -75,7 +74,12 @@ DEPS = $(wildcard src/*.h) Makefile include/lib739kv.h
 
 TESTFILES = test*.db
 
-all: obj $(SLIB) $(EXECOBJ) $(EXEC) python_binding TAGS
+#build etags only if the command exist
+ifneq (, $(shell which etags))
+	ETAGS = TAGS
+endif
+
+all: obj $(SLIB) $(EXECOBJ) $(EXEC) python_binding $(ETAGS)
 
 $(SLIB): $(OBJS)
 	$(CPP) $(CFLAGS) -shared $^ -o $@ $(LDFLAGS)
