@@ -36,6 +36,14 @@ restart.  The library discards unreachable servers during a run.
 
 To restart testing from a clean slate, you'll also need to delete any
 stale .sqlite files, which are tied to the host's port.
+
+If you have trouble with the parameters, try running these three
+commands in three different terminal sessions:
+
+    python3 basic_server.py 7390 0 '["7390", "7391"]'
+    python3 basic_server.py 7391 0 '["7390", "7391"]'
+    python3 test1.py '["localhost:7390", "localhost:7391"]'
+
 """
 
 from datetime import datetime
