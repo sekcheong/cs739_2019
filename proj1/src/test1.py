@@ -10,12 +10,11 @@ old_val = 0
 def main(servers):
     kvlib.init(servers)
 
-    pdb.set_trace()
+    status, val = kvlib.put("a", 12)
+    print("put a: {} ({})".format(val, status))
 
-    print(kvlib.put("a", 1, old_val))
-    print(old_val)
-    print(kvlib.get("a", old_val))
-    print(old_val)
+    status, val = kvlib.get("a")
+    print("get a: {} ({})".format(val, status))
 
     kvlib.shutdown()
 

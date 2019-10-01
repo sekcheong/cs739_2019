@@ -17,6 +17,8 @@ import sys
 from withsqlite import sqlite_db
 
 
+NULL = bytes(1)
+
 @unique
 class Action(Enum):
     """The list of available server actions."""
@@ -25,6 +27,14 @@ class Action(Enum):
     UPDATE = 1
     GET = 2
     SHUTDOWN = 3
+
+    @staticmethod
+    def wrap(msg):
+        return bytes(json.dumps(msg), encoding="ascii") + NULL
+
+    @staticmethod
+    def unwrap(msg):
+        return json.loads(str(msg[:-1], encoding="ascii"))
 
 class KvEntry:
     """A single key-value entry."""
@@ -40,7 +50,10 @@ class KvEntry:
         self.t = t
 
     def __repr__(self):
-        return "{} @ {}.{}".format(self.v, self.t.second, self.t.microsecond)
+        return "['{}', '{}', {}]".format(self.k, self.v, self.t)
+
+    def asplode(self):
+        return [self.k, self.v, self.t]
 
 
 class KvServer:
@@ -96,9 +109,7 @@ class KvServer:
             self.id, "1" if self.live else "0",
             [(k, self.kvs[k]) for k in self.kvs],
             "\n    ".join([
-                "{}: {}.{}".format(k,
-                                   self.server_updates[k].second,
-                                   self.server_updates[k].microsecond)
+                "{}: {}".format(k, self.server_updates[k])
                 for k in self.server_updates])))
 
     def shutdown(self):
@@ -111,9 +122,9 @@ class KvServer:
     def save_db(self):
         """Save state to db."""
 
-        self.db["servers"] = self.server_updates
-        self.db["kvs"] = self.kvs
-        self.db.save()
+        # self.db["servers"] = self.server_updates
+        # self.db["kvs"] = self.kvs
+        # self.db.save()
 
     def insert(self, key, value, time=None):
         """Insert new value into the kv-store."""
@@ -169,11 +180,13 @@ class KvServer:
         newer_keys = list()
 
         for kve in replay:
+            kve = KvEntry(*kve)
             if kve not in self.kvs or self.kvs[kve.k].t <= kve.t:
                 self.kvs[kve.k] = kve
                 newer_keys.append(kve)
+
         try:
-            self.server_updates[server.id] = max([x.t for x in replay])
+            self.server_updates[server.id] = max([x[2] for x in replay])
         except ValueError:
             # nothing to replay, so the server's update time is already caught up.
             pass
@@ -192,14 +205,14 @@ class KvServer:
         # open connection
         sock = s.socket(s.AF_INET, s.SOCK_STREAM)
         try:
-            sock.connect(("localhost", server.id))
-            sock.settimeout(10) # FIXME remove
+            sock.connect(("localhost", int(server.id)))
+            sock.settimeout(20) # FIXME remove
         except ConnectionRefusedError:
             # server down
             return []
 
         # send message
-        msg_out = json.dumps([Action.UPDATE, self.id, k, v, t])
+        msg_out = Action.wrap([Action.UPDATE.value, self.id, k, v, t])
         messlen = sock.send(msg_out)
 
         # check for obvious errors
@@ -207,16 +220,15 @@ class KvServer:
             return []
 
         # reveice reply
-        received, msg_in = 1, bytes()
-        while received:
+        msg_in, data = bytes(), bytes(1)
+        while NULL not in msg_in and data:
             data = sock.recv(2**16)
             msg_in += data
-            received = len(data)
 
         # clean up connection
         sock.close()
 
-        return json.loads(msg_in)
+        return Action.unwrap(msg_in)
 
     def serve(self):
         """Serve until killed."""
@@ -236,34 +248,25 @@ class KvServer:
 
         # receive the data
         received, msg_in = 1, bytes()
-        while received:
+        while NULL not in msg_in:
             data = sock.recv(2**16)
             msg_in += data
-            received = len(data)
-
-        print("received connection!")
 
         if msg_in:
-            print("msg_in " + str(msg_in, encoding="ascii"))
+            request = Action.unwrap(msg_in)
+            xmit = lambda x: sock.sendall(Action.wrap(x))
+            action = Action(request[0])
 
-            request = json.loads(str(msg_in, encoding="ascii"))
-            xmit = lambda x: sock.sendall(bytes(json.dumps(x)), encoding="ascii")
-
-            if request[0] == Action.GET:
-                status, value = self.get(request[1])
-                xmit((status, value))
-
-            if request[0] == Action.INSERT:
-                status, value = self.insert(*request[2:3])
-                xmit((status, value))
-
-            if request[0] == Action.UPDATE:
-                xmit(self.receive(*request[1:]))
-
-            if request[0] == Action.SHUTDOWN:
-                # shutdown before closing socket so manager doesn't kill us before
-                # we've saved data.
+            if action == Action.GET:
+                xmit(self.get(request[2]))
+            elif action == Action.INSERT:
+                xmit(self.insert(request[2], request[3])),
+            elif action == Action.UPDATE:
+                xmit(self.receive(*request[1:])),
+            elif action == Action.SHUTDOWN:
                 self.shutdown()
+            else:
+                raise RuntimeError("Unrecognized action: {}".format(request[0]))
 
         sock.close()
 
@@ -279,12 +282,12 @@ class KvServer:
         # we need to play the updates forward from the oldest remote server time.
         playback = min(t, self.server_updates[sender])
 
-        # these are the keys newer than the remote server
-        replay = [self.kvs[k] for k in self.kvs if self.kvs[k].t > playback]
+        # these are the kves newer than the remote server
+        replay = [self.kvs[k].asplode() for k in self.kvs if self.kvs[k].t > playback]
 
         # the remote server is now as updated as the most recent update we sent
         # it, or it sent us, whichever is newer
-        self.server_updates[sender] = max([x.t for x in replay] + [t])
+        self.server_updates[sender] = max([x[2] for x in replay] + [t])
 
         self.save_db()
 
@@ -294,7 +297,7 @@ class KvServer:
 def main(myport, start, server_ports):
     """Load server list and start serving."""
 
-    KvServer.servers = [KvServer(port, server_ports, start) for port in server_ports]
+    KvServer.servers = [KvServer(port, server_ports, int(start)) for port in server_ports]
 
     try:
         myserver = [s for s in KvServer.servers if s.id == myport][0]

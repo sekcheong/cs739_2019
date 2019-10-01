@@ -9,14 +9,13 @@ All other functions are internal to the library itself.
 from basic_server import Action
 import codecs
 import json
-import pdb
 import random
 import socket as s
 import subprocess
 
 SERVERS = list()
 PIDS = "sek-nick.pids"
-
+NULL = bytes(1)
 
 def init(svr_list):
     """Set active server list."""
@@ -77,7 +76,7 @@ def start(server):
     global SERVERS
     SERVERS.append(server)
 
-def put(k, v, old_val=None):
+def put(k, v):
     """Insert k,v into the keystore, set old_val to prevous value."""
 
     try:
@@ -96,9 +95,9 @@ def put(k, v, old_val=None):
         sock.send(client_msg(Action.INSERT, k, v))
         status, old_val = receive(sock)
 
-    return status
+    return status, old_val
 
-def get(k, val=None):
+def get(k):
     """Return key's current value from the datastore."""
 
     try:
@@ -115,7 +114,7 @@ def get(k, val=None):
 
         sock.close()
 
-    return status
+    return status, val
 
 def connect(target=None):
     """Connect to the specified server or a random one over the socket.
@@ -130,7 +129,6 @@ def connect(target=None):
         server = target or random.choice(SERVERS)
         sock = s.socket(s.AF_INET, s.SOCK_STREAM)
         sock.settimeout(20) # FIXME remove
-
 
         try:
             sock.connect(server)
@@ -195,20 +193,20 @@ def invalid_encoding(astr):
 def receive(sock):
     """Return the value received from the remote server."""
 
-    received, msg_in = 1, ""
+    msg_in = bytes()
+    data = bytes(1)
 
-    while received:
+    while NULL not in msg_in and data:
         data = sock.recv(2**16)
         msg_in += data
-        received = len(data)
 
-    return json.loads(msg_in)
+    return "" if not msg_in else Action.unwrap(msg_in)
 
 def client_msg(msg_type, k=None, v=None):
-    """Prepare a message of the specidfed type."""
+    """Prepare a message of the specified type."""
 
-    return bytes(json.dumps({
+    return Action.wrap({
         Action.INSERT:    [0, 0, k, v, 0],
         Action.GET:       [2, 0, k, 0, 0],
         Action.SHUTDOWN:  [3, 0, 0, 0, 0],
-    }[msg_type]), encoding="ascii")
+    }[msg_type])
