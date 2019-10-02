@@ -2,6 +2,24 @@
 
 CS737 Distributed Systems Fall 2019
 
+# Final Pre-Submission Tests
+
+## Segfault
+
+    make -k
+    cd testing
+    LD_LIBRARY_PATH=. python3 server_manager.py ../api_test
+
+To close the ports between tests:
+
+    while [[ "`netstat -plant 2>/dev/null | grep 739`" != "" ]]; do sleep 1; netstat -plant 2>/dev/null | grep 739 | awk '{ print $7 }' | cut -d"/" -f1 | xargs kill 2>/dev/null; done
+
+## Hooking up library
+
+raise error: -1
+return none gives 0
+return value for 1
+
 # Dependencies
 
 Install the dependencies with:

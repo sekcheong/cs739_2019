@@ -90,7 +90,7 @@ class KvServer:
         self.live = 1
         self.sock = 0 # configured in self.serve()
 
-        self.db = sqlite_db(self.id, autocommit = True)
+        self.db = sqlite_db(self.id, autocommit = False)
         self.db.begin()
 
         try:
@@ -118,6 +118,7 @@ class KvServer:
 
         self.save_db()
         self.db.save()
+        self.sock.shutdown(s.SHUT_RDWR)
         self.sock.close()
         self.live = 0
 
@@ -228,6 +229,7 @@ class KvServer:
             msg_in += data
 
         # clean up connection
+        #sock.shutdown(s.SHUT_RDWR)
         sock.close()
 
         return Action.unwrap(msg_in)
@@ -270,6 +272,7 @@ class KvServer:
             else:
                 raise RuntimeError("Unrecognized action: {}".format(request[0]))
 
+        #sock.shutdown(s.SHUT_RDWR)
         sock.close()
 
     def receive(self, sender, k, v, t):

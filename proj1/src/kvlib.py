@@ -112,6 +112,7 @@ def get(k):
         sock.send(client_msg(Action.GET, k))
         status, val = receive(sock)
 
+        #sock.shutdown(s.SHUT_RDWR)
         sock.close()
 
     return status, val
@@ -134,6 +135,7 @@ def connect(target=None):
             sock.connect(server)
         except ConnectionRefusedError:
             SERVERS.remove(server)
+            #sock.shutdown(s.SHUT_RDWR)
             sock.close()
             sock = None
 

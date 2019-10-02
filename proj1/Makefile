@@ -28,7 +28,7 @@ LDFLAGS_PYTHON = `pkg-config --libs python3`
 ifeq ($(DEBUG), 1)
 	OPTS=-O0 -g
 else
-	OPTS=-Ofast -DNDEBUG 
+	OPTS=-Ofast -DNDEBUG
 endif
 
 
@@ -79,7 +79,7 @@ ifneq (, $(shell which etags))
 	ETAGS = TAGS
 endif
 
-all: obj $(SLIB) $(EXECOBJ) $(EXEC) python_binding $(ETAGS)
+all: obj $(SLIB) $(EXECOBJ) $(EXEC) python_binding $(ETAGS) python_src
 
 $(SLIB): $(OBJS)
 	$(CPP) $(CFLAGS) -shared $^ -o $@ $(LDFLAGS)
@@ -99,6 +99,9 @@ kvs739.o: kvs739.cpp $(DEPS)
 python_binding: $(SLIB) kvs739.o
 	$(CPP) -shared $(addprefix $(OBJDIR), kvs739.o)	$(LDFLAGS) $(SLIB) $(LDFLAGS_PYTHON) -o kvs.so
 	cp *.so ./testing
+
+python_src:
+	cp src/*py testing/
 
 TAGS: $(wildcard src/*.h) $(wildcard src/*.cpp) $(wildcard testing/*.h) $(wildcard testing/*.cpp) Makefile include/lib739kv.h
 	-find . -type f -iname "*.[chS]p?" | xargs etags -a

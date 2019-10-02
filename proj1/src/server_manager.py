@@ -53,6 +53,9 @@ sockets to die between tests:
 
 from datetime import datetime
 import json
+import sys
+import kvs
+import kvlib
 import subprocess
 import sys
 
@@ -73,6 +76,11 @@ def main(script, start, end):
                  svr, json.dumps(now), json.dumps(servers)])
 
             pidfile.write("{} {}\n".format(proc.pid, svr))
+
+    kvs.init_handler(kvlib.init)
+    kvs.put_handler(kvlib.put)
+    kvs.get_handler(kvlib.get)
+    kvs.shutdown_handler(kvlib.shutdown)
 
     subprocess.run(
         [script, json.dumps(["localhost:" + str(svr) for svr in servers])])
