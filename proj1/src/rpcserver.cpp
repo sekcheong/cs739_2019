@@ -2,6 +2,7 @@
 #include "message.h"
 #include "exception.h"
 #include <string.h>
+#include <netinet/tcp.h>
 
 
 void args_unpack(char **list, char *buff) {
@@ -93,6 +94,13 @@ void rpc_server::connection_handler() {
 }
 
 
+// void print_value(const char *value, int len) {
+// 	char *buff[MAX_VALUE_SIZE+1];
+// 	memcpy(buff, value, len);
+// 	buff[len] = 0;
+// 	DEBUG_PRINT("rpc_server::value = [%d]", buff);
+// }
+
 void rpc_server::message_handler() {
 
 	DEBUG_PRINT("rpc_server::message_handler() [begin]");
@@ -102,10 +110,13 @@ void rpc_server::message_handler() {
 		int sockfd;
 
 		if (conns_.dequeue_wait(sockfd)) {
+
+			int flag = 1; 
+			setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, (char *) &flag, sizeof(int));
 			
 			if (!running_) break;
 			
-			char buff[MAX_VALUE_SIZE];
+			char buff[MAX_VALUE_SIZE+1];
 			//int buff_len = sizeof(buff);	
 			message msg;		
 
@@ -132,7 +143,7 @@ void rpc_server::message_handler() {
 
 				case command::INIT: {
 						message res(command::ERROR);
-						DEBUG_PRINT("dsserver::message_handler(): INIT");
+						DEBUG_PRINT("rpc_server::message_handler(): INIT");
 						if (init_cb_) {
 							char* args[128];
 							args_unpack(args, (char*) msg.value());
@@ -146,11 +157,17 @@ void rpc_server::message_handler() {
 
     			case command::GET: {
     					message res(command::ERROR);
-    					DEBUG_PRINT("dsserver::message_handler(): GET: key=%s", msg.key());
+    					DEBUG_PRINT("rpc_server::message_handler(): GET: key=%s", msg.key());
 						if (get_cb_) {
-							if (get_cb_((char*)msg.key(), buff)==1) {
+							int ret = get_cb_((char*)msg.key(), buff);
+							if (ret==0) {
+								DEBUG_PRINT("rpc_server::message_handler(): GET: value[%d]=[%s]", msg.key(), buff);
 								res.set_command(command::OK);
 								res.set_value(buff, strlen(buff));
+							}
+							else if (ret==1) {
+								DEBUG_PRINT("rpc_server::message_handler(): GET: key[%s] doesn't exit!=%s", msg.key());
+								res.set_command(command::NO_VAL);
 							}
 						}
 						send(sockfd, (void *) &res, sizeof(message), 0);
@@ -159,7 +176,7 @@ void rpc_server::message_handler() {
 
     			case command::PUT: {
     					message res(command::ERROR);
-    					DEBUG_PRINT("dsserver::message_handler(): PUT: key=%s", msg.key());
+    					DEBUG_PRINT("rpc_server::message_handler(): PUT: key=%s", msg.key());
 						if (put_cb_) {
 							if (put_cb_((char*)msg.key(), (char*)msg.value(), buff)==1) {
 								res.set_command(command::OK);
@@ -172,7 +189,7 @@ void rpc_server::message_handler() {
 
     			case command::SHUT_DOWN: {
     					message res(command::ERROR);
-    					DEBUG_PRINT("dsserver::message_handler(): SHUT_DOWN");
+    					DEBUG_PRINT("rpc_server::message_handler(): SHUT_DOWN");
 						if (shutdown_cb_) {
 							if (shutdown_cb_()==1) {
 								res.set_command(command::OK);
