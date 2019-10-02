@@ -241,7 +241,7 @@ class KvServer:
         self.sock = s.socket(s.AF_INET, s.SOCK_STREAM)
         self.sock.bind(('', int(self.id)))
         self.sock.listen(10)
-        self.sock.settimeout(10) # FIXME remove
+        self.sock.settimeout(10)
         while self.live:
             try:
                 newsock = self.sock.accept()[0]

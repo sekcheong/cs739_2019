@@ -75,9 +75,6 @@ def kill(server, forget = 1):
         sock.shutdown(s.SHUT_RDWR)
         sock.close()
 
-    if forget:
-        SERVERS.remove(server)
-
 def start(server):
     """Make server ``(host, port)`` available."""
 
@@ -161,7 +158,6 @@ def connect(target=None):
         try:
             sock.connect(server)
         except ConnectionRefusedError:
-            SERVERS.remove(server)
             sock.shutdown(s.SHUT_RDWR)
             sock.close()
             sock = None
