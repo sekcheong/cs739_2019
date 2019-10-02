@@ -111,7 +111,7 @@ def c_put(k, v):
     if status == -1:
         raise RuntimeError("Bad input.")
     if old_val == None:
-        return []
+        return "[]"
     return old_val
 
 def get(k):
@@ -129,7 +129,7 @@ def get(k):
         sock.send(client_msg(Action.GET, k))
         status, val = receive(sock)
 
-        #sock.shutdown(s.SHUT_RDWR)
+        sock.shutdown(s.SHUT_RDWR)
         sock.close()
 
     return status, val
@@ -140,7 +140,7 @@ def c_get(k):
     if status == -1:
         raise RuntimeError("Bad input.")
     if val == None:
-        return []
+        return "[]"
 
     return val
 
@@ -156,13 +156,13 @@ def connect(target=None):
     while not sock and (SERVERS or target):
         server = target or random.choice(SERVERS)
         sock = s.socket(s.AF_INET, s.SOCK_STREAM)
-        # sock.settimeout(20) # FIXME remove
+        sock.settimeout(10) # FIXME remove
 
         try:
             sock.connect(server)
         except ConnectionRefusedError:
             SERVERS.remove(server)
-            #sock.shutdown(s.SHUT_RDWR)
+            sock.shutdown(s.SHUT_RDWR)
             sock.close()
             sock = None
 

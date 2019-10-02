@@ -229,7 +229,7 @@ class KvServer:
             msg_in += data
 
         # clean up connection
-        #sock.shutdown(s.SHUT_RDWR)
+        sock.shutdown(s.SHUT_RDWR)
         sock.close()
 
         return Action.unwrap(msg_in)
@@ -240,6 +240,7 @@ class KvServer:
         self.sock = s.socket(s.AF_INET, s.SOCK_STREAM)
         self.sock.bind(('', int(self.id)))
         self.sock.listen(10)
+        self.sock.settimeout(20) # FIXME remove
         while self.live:
             newsock = self.sock.accept()[0]
             self.handle_client(newsock)
@@ -271,9 +272,6 @@ class KvServer:
                 self.shutdown()
             else:
                 raise RuntimeError("Unrecognized action: {}".format(request[0]))
-
-        #sock.shutdown(s.SHUT_RDWR)
-        sock.close()
 
     def receive(self, sender, k, v, t):
         """A remote server sent us an update.
