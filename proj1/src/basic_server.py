@@ -299,7 +299,7 @@ class KvServer:
 def main(myport, start, server_ports):
     """Load server list and start serving."""
 
-    if myport not in server_ports:
+    if int(myport) not in server_ports:
         raise RuntimeError(
             "Server port {} must be included in list of available servers: {}".format(
                 myport, server_ports))

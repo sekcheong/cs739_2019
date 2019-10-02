@@ -44,6 +44,11 @@ commands in three different terminal sessions:
     python3 basic_server.py 7391 0 '["7390", "7391"]'
     python3 test1.py '["localhost:7390", "localhost:7391"]'
 
+This is also a good method to test performance, as it waits for the
+sockets to die between tests:
+
+    while [[ "`netstat -plant 2>/dev/null | grep 739`" != "" ]]; do sleep 1; done; time python3 server_manager.py; while [[ "`netstat -plant 2>/dev/null | grep 739`" != "" ]]; do sleep 1; done
+
 """
 
 from datetime import datetime

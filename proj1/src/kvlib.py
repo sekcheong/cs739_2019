@@ -88,7 +88,7 @@ def put(k, v):
     if bad_input(k, v):
         return -1
 
-    status = None
+    status, old_val = None, None
     sock = connect()
 
     if sock:
@@ -105,7 +105,7 @@ def get(k):
     except ValueError:
         return -1
 
-    status = None
+    status, val = None, None
     sock = connect()
 
     if sock:
@@ -127,7 +127,6 @@ def connect(target=None):
 
     while not sock and (SERVERS or target):
         server = target or random.choice(SERVERS)
-        server = SERVERS[0] # FIXME remove
         sock = s.socket(s.AF_INET, s.SOCK_STREAM)
         # sock.settimeout(20) # FIXME remove
 
