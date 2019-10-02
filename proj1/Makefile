@@ -101,7 +101,7 @@ python_binding: $(SLIB) kvs739.o
 	cp *.so ./testing
 
 python_src:
-	cp src/*py testing/
+	ln src/*py testing/
 
 TAGS: $(wildcard src/*.h) $(wildcard src/*.cpp) $(wildcard testing/*.h) $(wildcard testing/*.cpp) Makefile include/lib739kv.h
 	-find . -type f -iname "*.[chS]p?" | xargs etags -a
