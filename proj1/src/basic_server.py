@@ -237,13 +237,19 @@ class KvServer:
     def serve(self):
         """Serve until killed."""
 
+        print(self.id, "serving...")
         self.sock = s.socket(s.AF_INET, s.SOCK_STREAM)
         self.sock.bind(('', int(self.id)))
         self.sock.listen(10)
-        self.sock.settimeout(20) # FIXME remove
+        self.sock.settimeout(10) # FIXME remove
         while self.live:
-            newsock = self.sock.accept()[0]
-            self.handle_client(newsock)
+            try:
+                newsock = self.sock.accept()[0]
+            except s.timeout:
+                print(self.id, "timed out, quitting.")
+                self.shutdown()
+            else:
+                self.handle_client(newsock)
 
     def handle_client(self, sock):
         """Handle boxing and unboxing of the remote request."""
