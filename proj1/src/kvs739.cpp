@@ -9,7 +9,6 @@ static PyObject *py_put_callback_ = 0;
 static PyObject *py_shutdown_callback_ = 0;
 
 
-
 //Provide a null-terminated array of server names (similarly to argv[]). 
 //Each server name has the format "host:port" and initialize the client code. 
 //Returns 0 on success and -1 on failure. 
@@ -433,7 +432,7 @@ static int shutdown_callback() {
     auto gstate = PyGILState_Ensure(); 
 
     auto *result = PyObject_CallObject(py_shutdown_callback_, NULL);
-    
+
     if (result==NULL) {
 		auto* err = PyErr_Occurred();
 		if (err != NULL) {
