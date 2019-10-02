@@ -77,10 +77,10 @@ def main(script, start, end):
 
             pidfile.write("{} {}\n".format(proc.pid, svr))
 
-    kvs.init_handler(kvlib.init)
-    kvs.put_handler(kvlib.put)
-    kvs.get_handler(kvlib.get)
-    kvs.shutdown_handler(kvlib.shutdown)
+    kvs.init_handler(kvlib.c_init)
+    kvs.put_handler(kvlib.c_put)
+    kvs.get_handler(kvlib.c_get)
+    kvs.shutdown_handler(kvlib.c_shutdown)
 
     subprocess.run(
         [script, json.dumps(["localhost:" + str(svr) for svr in servers])])
