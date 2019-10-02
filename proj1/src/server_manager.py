@@ -82,6 +82,8 @@ def main(script, start, end):
     kvs.get_handler(kvlib.c_get)
     kvs.shutdown_handler(kvlib.c_shutdown)
 
+    import time; time.sleep(5)
+
     subprocess.run(
         [script, json.dumps(["localhost:" + str(svr) for svr in servers])])
 

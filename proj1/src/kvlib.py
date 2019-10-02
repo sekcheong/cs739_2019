@@ -100,6 +100,9 @@ def put(k, v):
         sock.send(client_msg(Action.INSERT, k, v))
         status, old_val = receive(sock)
 
+        sock.shutdown(s.SHUT_RDWR)
+        sock.close()
+
     return status, old_val
 
 def c_put(k, v):
