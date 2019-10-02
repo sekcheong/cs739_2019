@@ -157,7 +157,7 @@ void rpc_server::message_handler() {
 
     			case command::GET: {
     					message res(command::ERROR);
-    					DEBUG_PRINT("rpc_server::message_handler(): GET: key=%s", msg.key());
+    					DEBUG_PRINT("rpc_server::message_handler(): GET: key=[%s]", msg.key());
 						if (get_cb_) {
 							int ret = get_cb_((char*)msg.key(), buff);
 							if (ret==0) {
@@ -176,11 +176,21 @@ void rpc_server::message_handler() {
 
     			case command::PUT: {
     					message res(command::ERROR);
-    					DEBUG_PRINT("rpc_server::message_handler(): PUT: key[%s],value[%s]", msg.key(), msg.value());
+    					DEBUG_PRINT("rpc_server::message_handler(): PUT: key[%s], value[%s]", msg.key(), msg.value());
 						if (put_cb_) {
-							if (put_cb_((char*)msg.key(), (char*)msg.value(), buff)==1) {
+							// if (put_cb_((char*)msg.key(), (char*)msg.value(), buff)==1) {
+							// 	res.set_command(command::OK);
+							// 	res.set_value(buff, strlen(buff));
+							// }
+							int ret = put_cb_((char*)msg.key(), (char*)msg.value(), buff);
+							if (ret==0) {
+								DEBUG_PRINT("rpc_server::message_handler(): PUT: value[%s]=[%s] OK", msg.key(), buff);
 								res.set_command(command::OK);
 								res.set_value(buff, strlen(buff));
+							}
+							else if (ret==1) {
+								DEBUG_PRINT("rpc_server::message_handler(): PUT: key[%s] doesn't exit!", msg.key());
+								res.set_command(command::NO_VAL);
 							}
 						}
 						send(sockfd, (void *) &res, sizeof(message), 0);
