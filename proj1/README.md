@@ -2,27 +2,25 @@
 
 CS737 Distributed Systems Fall 2019
 
-# Final Pre-Submission Tests
+# Testing Instructions
 
-## Segfault
+    $ cd proj1
+    $ make -k
+    $ cd testing
+    $ time LD_LIBRARY_PATH=. python3 server_manager.py (test-script)
 
-    make -k
-    cd testing
-    LD_LIBRARY_PATH=. python3 server_manager.py ../api_test
+Existing test scripts include:
 
-To close the ports between tests:
+- ./test1.py
+- ../api_test
 
-    while [[ "`netstat -plant 2>/dev/null | grep 739`" != "" ]]; do sleep 1; netstat -plant 2>/dev/null | grep 739 | awk '{ print $7 }' | cut -d"/" -f1 | xargs kill 2>/dev/null; done
+Server_manager will pass the server ports you can use for `kv_init` as a string of command line arguments.  If you do not wish to use those, localhost ports 7390 to 7400 have been reserved for your purposes.
 
-## Hooking up library
-
-raise error: -1
-return none gives 0
-return value for 1
+To run tests correctly, make sure your cwd is the "testing" directory, and your `LD_LIBRARY_PATH` contains ".", the current directory.  `server-manager.py` takes several different parameters and contains many instructions describing their use, so read through that first if you have any questions.
 
 # Dependencies
 
-Install the dependencies with:
+Install any unmet dependencies with:
 
     apt-get python3-dev libpython3-cxx sqlite-dev
 
