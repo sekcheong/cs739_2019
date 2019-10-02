@@ -27,6 +27,10 @@ def init(svr_list):
         server[1] = int(server[1])
         SERVERS.append(tuple(server))
 
+def c_init(servers):
+    init(servers)
+    return 1
+
 def shutdown():
     """Gracefully kill all servers."""
 
@@ -35,6 +39,10 @@ def shutdown():
     for server in SERVERS:
         kill(server, 0)
         subprocess.run(["kill", server_pid(server)])
+
+def c_shutdown():
+    shutdown()
+    return 1
 
 def server_pid(server):
     """Return this server's pid and port from pidfile."""
@@ -97,6 +105,15 @@ def put(k, v):
 
     return status, old_val
 
+def c_put(k, v):
+    status, old_val = put(k, v)
+
+    if status == -1:
+        raise RuntimeError("Bad input.")
+    if old_val == None:
+        return []
+    return old_val
+
 def get(k):
     """Return key's current value from the datastore."""
 
@@ -116,6 +133,16 @@ def get(k):
         sock.close()
 
     return status, val
+
+def c_get(k):
+    status, val = get(k)
+
+    if status == -1:
+        raise RuntimeError("Bad input.")
+    if val == None:
+        return []
+
+    return val
 
 def connect(target=None):
     """Connect to the specified server or a random one over the socket.
@@ -212,3 +239,17 @@ def client_msg(msg_type, k=None, v=None):
         Action.GET:       [2, 0, k, 0, 0],
         Action.SHUTDOWN:  [3, 0, 0, 0, 0],
     }[msg_type])
+
+def main():
+    import kvs
+    kvs.init_handler(c_init)
+    kvs.put_handler(c_put)
+    kvs.get_handler(c_get)
+    kvs.shutdown_handler(c_shutdown)
+
+    input("Press Enter to exit...")
+    print()
+    return
+
+if __name__ == "__main__":
+    main()

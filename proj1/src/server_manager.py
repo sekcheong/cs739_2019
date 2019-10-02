@@ -40,8 +40,8 @@ stale .sqlite files, which are tied to the host's port.
 If you have trouble with the parameters, try running these three
 commands in three different terminal sessions:
 
-    python3 basic_server.py 7390 0 '["7390", "7391"]'
-    python3 basic_server.py 7391 0 '["7390", "7391"]'
+    python3 basic_server.py 7390 0 '[7390, 7391]'
+    python3 basic_server.py 7391 0 '[7390, 7391]'
     python3 test1.py '["localhost:7390", "localhost:7391"]'
 
 This is also a good method to test performance, as it waits for the
