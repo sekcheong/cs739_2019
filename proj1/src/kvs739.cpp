@@ -3,11 +3,12 @@
 
 
 static rpc_server *rpc_ = 0;
-
 static PyObject *py_init_callback_ = 0;
 static PyObject *py_get_callback_ = 0;
 static PyObject *py_put_callback_ = 0;
 static PyObject *py_shutdown_callback_ = 0;
+
+
 
 //Provide a null-terminated array of server names (similarly to argv[]). 
 //Each server name has the format "host:port" and initialize the client code. 
@@ -1070,6 +1071,15 @@ static struct PyModuleDef kvsmodule = {
 };
 
 
+void exit_handler() {
+	DEBUG_PRINT("exit_handler() [begin]");
+	if (rpc_) {
+		delete rpc_;
+	}
+	DEBUG_PRINT("exit_handler() [end]");
+}
+
+
 PyMODINIT_FUNC PyInit_kvs(void) {
 	DEBUG_PRINT("PyInit_kvs() [begin]");
     PyObject* module = PyModule_Create(&kvsmodule);
@@ -1084,6 +1094,8 @@ PyMODINIT_FUNC PyInit_kvs(void) {
 		rpc_->set_get_callback(get_callback);
 		rpc_->set_shutdown_callback(shutdown_callback);
 	}
+
+	Py_AtExit(exit_handler);
 
     if (PyType_Ready(&DataStoreType) < 0) return NULL;
     Py_INCREF(&DataStoreType);
