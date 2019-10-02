@@ -282,7 +282,18 @@ static int init_callback(char** server_list) {
    	// DEBUG_PRINT("init_callback() 6");
     
     if (result==NULL) {
-        DEBUG_PRINT("init_callback() failed to invoke the callback function");
+
+		auto* err = PyErr_Occurred();
+		if (err != NULL) {
+			PyObject *ptype, *pvalue, *ptraceback;
+			PyObject *pystr;
+			PyErr_Fetch(&ptype, &pvalue, &ptraceback);
+			pystr = PyObject_Str(pvalue);
+			const char *str = PyUnicode_AsUTF8(pystr);
+			// error_description = strdup(str);
+			DEBUG_PRINT("init_callback() Failed to invoke the callback. ERROR: %s", str);
+		}
+
         PyErr_Clear();
         error = true;
     }
@@ -324,11 +335,19 @@ static int get_callback(char* key, char* value) {
     auto *result = PyObject_CallObject(py_get_callback_, arglist);
 
 
- 	DEBUG_PRINT("get_callback() 5");
     if (result==NULL) {
-        DEBUG_PRINT("get_callback() failed to invoke the callback function");
+		auto* err = PyErr_Occurred();
+		if (err != NULL) {
+			PyObject *ptype, *pvalue, *ptraceback;
+			PyObject *pystr;
+			PyErr_Fetch(&ptype, &pvalue, &ptraceback);
+			pystr = PyObject_Str(pvalue);
+			const char *str = PyUnicode_AsUTF8(pystr);
+			// error_description = strdup(str);
+			DEBUG_PRINT("get_callback() Failed to invoke the callback. ERROR: %s", str);
+		}
+
         PyErr_Clear();
-        DEBUG_PRINT("get_callback() 5.5");
         error = true;
     }
 
@@ -370,7 +389,17 @@ static int put_callback(char* key, char* value, char* old_value) {
     auto *result = PyObject_CallObject(py_put_callback_, arglist);
     
     if (result==NULL) {
-        DEBUG_PRINT("put_callback() failed to invoke the callback function");
+		auto* err = PyErr_Occurred();
+		if (err != NULL) {
+			PyObject *ptype, *pvalue, *ptraceback;
+			PyObject *pystr;
+			PyErr_Fetch(&ptype, &pvalue, &ptraceback);
+			pystr = PyObject_Str(pvalue);
+			const char *str = PyUnicode_AsUTF8(pystr);
+			// error_description = strdup(str);
+			DEBUG_PRINT("put_callback() Failed to invoke the callback. ERROR: %s", str);
+		}
+
         PyErr_Clear();
         error = true;
     }
@@ -404,8 +433,19 @@ static int shutdown_callback() {
     auto gstate = PyGILState_Ensure(); 
 
     auto *result = PyObject_CallObject(py_shutdown_callback_, NULL);
+    
     if (result==NULL) {
-        DEBUG_PRINT("shutdown_callback() failed to invoke the callback function");
+		auto* err = PyErr_Occurred();
+		if (err != NULL) {
+			PyObject *ptype, *pvalue, *ptraceback;
+			PyObject *pystr;
+			PyErr_Fetch(&ptype, &pvalue, &ptraceback);
+			pystr = PyObject_Str(pvalue);
+			const char *str = PyUnicode_AsUTF8(pystr);
+			// error_description = strdup(str);
+			DEBUG_PRINT("shutdown_callback() Failed to invoke the callback. ERROR: %s", str);
+		}
+
         PyErr_Clear();
         error = true;
     }
