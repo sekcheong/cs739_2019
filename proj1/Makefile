@@ -112,4 +112,4 @@ obj:
 .PHONY: clean
 
 clean:
-	rm -rf $(OBJS) $(SLIB) $(EXEC) $(EXECOBJ) $(OBJDIR) $(TESTFILES) ./testing/*.so kvs.so TAGS
+	rm -rf $(OBJS) $(SLIB) $(EXEC) $(EXECOBJ) $(OBJDIR) $(TESTFILES) ./testing/*.so kvs.so TAGS ./testing/basic_server.py ./testing/kvlib.py ./testing/server_manager.py ./testing/test1.py ./testing/withsqlite.py ./testing/__pycache__
