@@ -27,10 +27,5 @@ int main() {
 
 	kv739_shutdown();
 
-	// char *l[5];
-	// args_pack(args, buffer);
-	// args_unpack(l, buffer);
-	// args_print(l);
-
 	return 0;
 }

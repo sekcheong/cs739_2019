@@ -55,11 +55,11 @@ OBJ=	sqlite3.o \
 
 
 #list of executable to build
-EXEC =  kvdaemon \
-		test \
+EXEC =  test \
 		server_test \
 		client_test \
 		api_test \
+# 		kvdaemon \
 # 		rpcc \
 # 		rpcs \
 
