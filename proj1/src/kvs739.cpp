@@ -338,13 +338,18 @@ static int get_callback(char* key, char* value) {
 
    if (error) return -1;
 
-    DEBUG_PRINT("get_callback() 6");
+   	DEBUG_PRINT("get_callback() [end]");
+
     const char *p = PyUnicode_AsUTF8(result);
     strcpy(value,p);
 
-	DEBUG_PRINT("get_callback() [end]");  
-
-	return 1;
+    //check if key doesn't exit symbol we return 0
+    if (strlen(value)==2) {
+    	if (value[0]=='[' && value[1]==']') {
+    		return 1;
+    	}
+    }
+	return 0;
 }
 
 
@@ -375,11 +380,16 @@ static int put_callback(char* key, char* value, char* old_value) {
     if (error) return -1;
 
     const char *p = PyUnicode_AsUTF8(result);
+    DEBUG_PRINT("put_callback() [end]");  
+    
     strcpy(old_value, p);
+    if (strlen(old_value)==2) {
+    	if (old_value[0]=='[' && old_value[1]==']') {
+    		return 1;
+    	}
+    }
 
-	DEBUG_PRINT("put_callback() [end]");  
-
-	return 1;
+	return 0;
 }
 
 

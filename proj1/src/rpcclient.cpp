@@ -1,6 +1,7 @@
 #include <memory.h>
 #include "rpcclient.h"
 #include "exception.h"
+#include <netinet/tcp.h>
 
 
 void args_pack(char** list, char *buff) {
@@ -61,6 +62,8 @@ void rpc_client::send_message(const message &msg, message &response) {
 		throw exception("rpc_client::send_message() Error connecting to end point", errno);
 	}
 
+	int flag = 1; 
+	setsockopt(sock_, IPPROTO_TCP, TCP_NODELAY, (char *) &flag, sizeof(int));
 	DEBUG_PRINT("rpc_client::send_message() send...");
 	send(sock_, (void *) &msg, sizeof(message), 0);
 
@@ -87,16 +90,16 @@ int rpc_client::get(const char *key, char *value) {
 		
 		send_message(msg, res);
 
-		//if key not found
-		if (res.get_command()==command::NO_VAL) {
-			DEBUG_PRINT("rpc_client::get() the key doesn't exist");
+		if (res.get_command()==command::OK) {
+			memcpy((void*)value, res.value(), res.get_value_size());
+			return 0;
+		}
+		else if (res.get_command()==command::NO_VAL) {
+			return 1;
+		}
+		else {
 			return -1;
 		}
-		else if (res.get_command()!=command::OK) {
-			DEBUG_PRINT("rpc_client::get() request failed!");
-			return -1;
-		}
-		memcpy((void*)value, res.value(), res.get_value_size());
 	}
 	catch (exception &ex) {
 		DEBUG_PRINT("rpc_client::get() request failed! Error:%s", ex.what());
@@ -119,10 +122,17 @@ int rpc_client::put(const char *key, const char *value, const char *old_value) {
 		msg.set_value(value, len);
 
 		send_message(msg, res);
-		if (res.get_command()!=command::OK) {
+
+		if (res.get_command()==command::OK) {
+			memcpy((void*)old_value, res.value(), res.get_value_size());
+			return 0;
+		}
+		else if (res.get_command()==command::NO_VAL) {
+			return 1;
+		}
+		else {
 			return -1;
 		}
-		memcpy((void*)old_value, res.value(), res.get_value_size());
 	}
 	catch (exception &ex) {
 		DEBUG_PRINT("rpc_client::put() request failed! Error:%s", ex.what());
