@@ -91,6 +91,7 @@ int rpc_client::get(const char *key, char *value) {
 		send_message(msg, res);
 
 		if (res.get_command()==command::OK) {
+			DEBUG_PRINT("rpc_client::get() key[%s], value[%s]", key,  res.value());
 			memcpy((void*)value, res.value(), res.get_value_size());
 			return 0;
 		}
@@ -124,10 +125,12 @@ int rpc_client::put(const char *key, const char *value, const char *old_value) {
 		send_message(msg, res);
 
 		if (res.get_command()==command::OK) {
+			DEBUG_PRINT("rpc_client::put() key[%s], value[%s], old_value[%s]", key,  msg.value(), res.value());
 			memcpy((void*)old_value, res.value(), res.get_value_size());
 			return 0;
 		}
 		else if (res.get_command()==command::NO_VAL) {
+			DEBUG_PRINT("rpc_client::put() key[%s], value[%s] is new", key,  msg.value());
 			return 1;
 		}
 		else {

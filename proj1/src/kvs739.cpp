@@ -351,7 +351,7 @@ static int get_callback(char* key, char* value) {
         error = true;
     }
 
-    DEBUG_PRINT("get_callback() 4");
+    //DEBUG_PRINT("get_callback() 4");
 
     Py_DECREF(arglist);
     PyGILState_Release(gstate);
@@ -362,7 +362,7 @@ static int get_callback(char* key, char* value) {
 
     const char *p = PyUnicode_AsUTF8(result);
     strcpy(value,p);
-
+	DEBUG_PRINT("get_callback() value[%s]", p);
     //check if key doesn't exit symbol we return 0
     if (strlen(value)==2) {
     	if (value[0]=='[' && value[1]==']') {
@@ -376,6 +376,7 @@ static int get_callback(char* key, char* value) {
 static int put_callback(char* key, char* value, char* old_value) { 
 	DEBUG_PRINT("put_callback() [begin]");
 
+	DEBUG_PRINT("put_callback() key[%s], value[%s]", key, value);
 	if (!py_put_callback_) return -1;
     
     //If you are getting called back from another non-Python created 
@@ -412,6 +413,7 @@ static int put_callback(char* key, char* value, char* old_value) {
     const char *p = PyUnicode_AsUTF8(result);
     DEBUG_PRINT("put_callback() [end]");  
     
+    DEBUG_PRINT("put_callback() old_value[%s]", p);
     strcpy(old_value, p);
     if (strlen(old_value)==2) {
     	if (old_value[0]=='[' && old_value[1]==']') {
@@ -456,7 +458,7 @@ static int shutdown_callback() {
     
     int ret = (int) PyLong_AsLong(result);
 	DEBUG_PRINT("shutdown_callback() ret=%d", ret);  
-	
+
 	DEBUG_PRINT("shutdown_callback() [end]");  
 
 	return ret;

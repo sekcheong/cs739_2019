@@ -161,7 +161,7 @@ void rpc_server::message_handler() {
 						if (get_cb_) {
 							int ret = get_cb_((char*)msg.key(), buff);
 							if (ret==0) {
-								DEBUG_PRINT("rpc_server::message_handler(): GET: value[%s]=[%s]", msg.key(), buff);
+								DEBUG_PRINT("rpc_server::message_handler(): GET: key[%s], value[%s]", msg.key(), buff);
 								res.set_command(command::OK);
 								res.set_value(buff, strlen(buff));
 							}
@@ -184,12 +184,12 @@ void rpc_server::message_handler() {
 							// }
 							int ret = put_cb_((char*)msg.key(), (char*)msg.value(), buff);
 							if (ret==0) {
-								DEBUG_PRINT("rpc_server::message_handler(): PUT: value[%s]=[%s] OK", msg.key(), buff);
+								DEBUG_PRINT("rpc_server::message_handler(): PUT: key[%s], value[%s], old_value[%s]", msg.key(), msg.value(), buff);
 								res.set_command(command::OK);
 								res.set_value(buff, strlen(buff));
 							}
 							else if (ret==1) {
-								DEBUG_PRINT("rpc_server::message_handler(): PUT: key[%s] doesn't exit!", msg.key());
+								DEBUG_PRINT("rpc_server::message_handler(): PUT: key[%s], value[%s] is a new key/value pair.", msg.key());
 								res.set_command(command::NO_VAL);
 							}
 						}

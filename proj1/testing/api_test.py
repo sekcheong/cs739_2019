@@ -10,14 +10,14 @@ def on_init(servers):
 
 def on_put(key, value):
 	print("on_put()")
-	print("  key   : ",key)
+	print("  key   : ", key)
 	print("  value : ", value)
 	#returns the old value
 	return "wufoo"
 
 def on_get(key):
 	print("on_get()")
-	print("  key   : ",key)
+	print("  key   : ", key)
 	#returns the value
 	#raise NameError("Key doesn't exist")
 	return "meow"
