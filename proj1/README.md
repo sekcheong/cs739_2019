@@ -5,7 +5,7 @@ CS737 Distributed Systems Fall 2019
 # Quickstart
 
     $ LD_LIBRARY_PATH=.; export LD_LIBRARY_PATH; cd testing
-    $ make -kC ..; rm *sqlite3*; time python3 server_manager.py ../api_test_danish1
+    $ make -kC ..; rm -f *sqlite3*; time python3 server_manager.py ../api_test_danish1
 
 # Testing Instructions
 
