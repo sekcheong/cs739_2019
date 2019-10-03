@@ -29,7 +29,7 @@ def init(svr_list):
 
 def c_init(servers):
     init(servers)
-    return 1
+    return 0
 
 def shutdown():
     """Gracefully kill all servers."""
@@ -42,7 +42,7 @@ def shutdown():
 
 def c_shutdown():
     shutdown()
-    return 1
+    return 0
 
 def server_pid(server):
     """Return this server's pid and port from pidfile."""
