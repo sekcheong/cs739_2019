@@ -18,7 +18,7 @@
 #define MAX_VAL_SIZE 2048
 
 #ifndef KVSTORE_SIZE
-    #define KVSTORE_SIZE 1000 // In terms of number of keys
+    #define KVSTORE_SIZE 10 // In terms of number of keys
 #endif
 
 #ifndef SLEEP_TIME_US
@@ -47,27 +47,22 @@ float get_time_elapsed_sec(struct timeval tv1, struct timeval tv2) {
 
 int main(int argc, char *argv[])
 {
-   
-    int num_servers = argc-2; 
-    // Test code starts here
-    char **servers;
-    servers = (char**)malloc((num_servers+1)*sizeof(char*));
 
-    for(int i=0;i<=num_servers;i++) {
-	servers[i] = (char*)malloc(SERVER_LOC_SIZE*sizeof(char));
-    }
+    printf("0000000000---000000000\n");
+    char *args[4];
 
-    strcpy(servers[0], "localhost:8003");
-    strcpy(servers[1], "localhost:8004");
-    strcpy(servers[2], "localhost:8005");
-    servers[num_servers] = 0;
-    int ret = kv739_init(servers);
+    args[0] = (char *) "localhost:7390";
+    args[1] = (char *) "localhost:7391";
+    args[2] = (char *) "localhost:7392";
+    args[3] = 0;
+
+    int ret = kv739_init(args);
     printf("Kv_init %d\n", ret);
 
     if(ret == -1){
-	    exit(0);
+            exit(0);
     }
-    
+
     // Now generate KVSTORE_SIZE random keys
     char **keys;
     keys = (char**) malloc(KVSTORE_SIZE*sizeof(char*));
@@ -88,14 +83,14 @@ int main(int argc, char *argv[])
     char *old_val;
     old_val = (char*) malloc(MAX_VAL_SIZE * sizeof(char));
     for(int i=0;i<KVSTORE_SIZE;i++) {
-       ret = kv739_put(keys[i], values[i], old_val);
+      ret = kv739_put(keys[i], values[i], old_val);
        assert(ret == 0); // there should be no failure
        assert(old_val[0] == '\0'); // old value should be NULL
     }
 
     // Allow for eventual consistency to play out its magic
     usleep(SLEEP_TIME_US);
-    
+
     // Check tolerance towards one failure - kill one process
     char *system_command = (char*) malloc(100*sizeof(char));
     strcpy(system_command, "kill -9 ");

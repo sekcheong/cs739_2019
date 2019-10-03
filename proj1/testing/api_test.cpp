@@ -15,6 +15,7 @@ int main() {
 	args[3] = 0;
 
 	char buffer[2049];
+        memset(buffer, 0, sizeof buffer);
 
 
 	if (kv739_init(args)==0) {

@@ -111,7 +111,7 @@ def c_put(k, v):
     if status == -1:
         raise RuntimeError("Bad input.")
     if old_val == None:
-        return "[]"
+        return "\x00"
     return old_val
 
 def get(k):
