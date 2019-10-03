@@ -59,6 +59,7 @@ EXEC =  test \
 		server_test \
 		client_test \
 		api_test \
+		api_test_danish1
 # 		kvdaemon \
 # 		rpcc \
 # 		rpcs \
