@@ -43,7 +43,7 @@ def main(servers):
     for i in range(0, puts):
         status, val = kvlib.put("a", 3)
     end = epochTime()
-    print(puts, "gets took", end - start, "seconds. gets per second", puts / (end - start))
+    print(puts, "puts took", end - start, "seconds. puts per second", puts / (end - start))
 
 if __name__ == "__main__":
     try:
