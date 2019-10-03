@@ -168,7 +168,7 @@ int rpc_client::init(char **servers) {
 	}
 
 	DEBUG_PRINT("rpc_client::init() [end]");
-	return 1;
+	return 0;
 }
 
 
@@ -190,5 +190,5 @@ int rpc_client::shutdown() {
 	}
 
 	DEBUG_PRINT("rpc_client::shutdown() [end]");
-	return 1;
+	return 0;
 }

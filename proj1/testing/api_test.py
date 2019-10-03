@@ -6,7 +6,7 @@ def on_init(servers):
 	print("on_init()")
 	for s in servers:
 	 	print ("   ", s)
-	return 1
+	return 0
 
 def on_put(key, value):
 	print("on_put()")
@@ -25,7 +25,7 @@ def on_get(key):
 def on_shutdown():
 	print("on_shutdown()")
 	#shutdown server
-	return 1
+	return 0
 
 
 #this is your service entry point which hooks up python code to APIs in 

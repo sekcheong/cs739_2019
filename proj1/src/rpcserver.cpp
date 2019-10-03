@@ -147,7 +147,7 @@ void rpc_server::message_handler() {
 						if (init_cb_) {
 							char* args[128];
 							args_unpack(args, (char*) msg.value());
-							if (init_cb_(args)==1) {
+							if (init_cb_(args)==0) {
 								res.set_command(command::OK);
 							}
 						}
@@ -201,7 +201,7 @@ void rpc_server::message_handler() {
     					message res(command::ERROR);
     					DEBUG_PRINT("rpc_server::message_handler(): SHUT_DOWN");
 						if (shutdown_cb_) {
-							if (shutdown_cb_()==1) {
+							if (shutdown_cb_()==0) {
 								res.set_command(command::OK);
 							}
 						}

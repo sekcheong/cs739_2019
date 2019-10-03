@@ -311,6 +311,7 @@ static int init_callback(char** server_list) {
 
     int ret = (int) PyLong_AsLong(result);
 
+	DEBUG_PRINT("init_callback() ret=%d", ret);  
 	DEBUG_PRINT("init_callback() [end]");  
 
 	return ret;
@@ -454,7 +455,8 @@ static int shutdown_callback() {
     if (error) return -1;
     
     int ret = (int) PyLong_AsLong(result);
-
+	DEBUG_PRINT("shutdown_callback() ret=%d", ret);  
+	
 	DEBUG_PRINT("shutdown_callback() [end]");  
 
 	return ret;

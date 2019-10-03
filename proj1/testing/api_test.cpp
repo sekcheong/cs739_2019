@@ -14,27 +14,33 @@ int main() {
 	args[2] = (char *) "localhost:7392";
 	args[3] = 0;
 
-	char buffer[2048];
-        int i = 0;
+	char buffer[2049];
 
-	kv739_init(args);
 
-	kv739_get((char *) "apple", buffer);
+	if (kv739_init(args)==0) {
+		printf("kv739_init() OK\n");
+	}
+	else {
+		printf("kv739_init() Failed\n");
+	}
 
-	printf("value=%s, status=%d\n", buffer, i);
 
-	kv739_put((char *) "orange", (char *) "good", buffer);
-	printf("value=%s, status=%d\n", buffer, i);
+	int ret = kv739_get((char *) "apple", buffer);
 
-	kv739_get((char *) "orange", buffer);
-	printf("value=%s, status=%d\n", buffer, i);
+	printf("value=%s, status=%d\n", buffer, ret);
 
-	kv739_shutdown();
+	ret = kv739_put((char *) "orange", (char *) "good", buffer);
+	printf("value=%s, status=%d\n", buffer, ret);
 
-	// char *l[5];
-	// args_pack(args, buffer);
-	// args_unpack(l, buffer);
-	// args_print(l);
+	ret = kv739_get((char *) "orange", buffer);
+	printf("value=%s, status=%d\n", buffer, ret);
+
+	if (kv739_shutdown()==0) {
+		printf("kv739_shutdown() OK\n");
+	}
+	else {
+		printf("kv739_shutdown() Failed!\n");
+	}
 
 	return 0;
 }
