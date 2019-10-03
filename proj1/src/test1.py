@@ -23,9 +23,6 @@ def main(servers):
     # performance would benefit greatly by switching to udp
     epochTime = lambda: float(datetime.strftime(datetime.now(), "%s.%f"))
 
-    gets = 40000
-    puts = 2000
-
     seconds = 60
     minutes = 2 * seconds
     gets = 650 * minutes

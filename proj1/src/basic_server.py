@@ -237,7 +237,6 @@ class KvServer:
     def serve(self):
         """Serve until killed."""
 
-        print(self.id, "serving...")
         self.sock = s.socket(s.AF_INET, s.SOCK_STREAM)
         self.sock.bind(('', int(self.id)))
         self.sock.listen(10)
@@ -246,7 +245,6 @@ class KvServer:
             try:
                 newsock = self.sock.accept()[0]
             except s.timeout:
-                print(self.id, "timed out, quitting.")
                 self.shutdown()
             else:
                 self.handle_client(newsock)
