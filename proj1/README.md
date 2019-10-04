@@ -270,3 +270,16 @@ Find the latest copy among the servers send it to the requester, all other clien
 # Questions
 1. From kv739_init it the caller will provide a list of host:port, if the hosts are remote how do we create servers on remote host?
 2.
+
+# Math
+
+95% CI r code:
+
+    ci95 <- function(input) {
+      s <- sd(input)
+      m <- mean(input)
+      n <- length(input)
+      e <- qnorm(0.975)*s/sqrt(n)
+      output <- c(m-e, m+e)
+      return (output)
+    }
