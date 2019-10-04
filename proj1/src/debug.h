@@ -2,7 +2,7 @@
 #define DEBUG_H
 
 #define MAX_DEBUG_STR_SIZE 256
-#define NDEBUG
+//#define NDEBUG
 
 void debug_print(const char *fmt, ...);
 

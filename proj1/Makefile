@@ -1,6 +1,6 @@
 UNAME := $(shell uname)
 
-DEBUG=1
+DEBUG=0
 
 SLIB=lib739kv.so
 
@@ -59,7 +59,7 @@ EXEC =  test \
 		server_test \
 		client_test \
 		api_test \
-		api_test_danish1
+		test_speed \
 # 		kvdaemon \
 # 		rpcc \
 # 		rpcs \
