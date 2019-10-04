@@ -290,7 +290,7 @@ static int init_callback(char** server_list) {
 			pystr = PyObject_Str(pvalue);
 			//const char *str = PyUnicode_AsUTF8(pystr);
 			// error_description = strdup(str);
-			DEBUG_PRINT("init_callback() Failed to invoke the callback. ERROR: %s", PyUnicode_AsUTF8(pystr););
+			DEBUG_PRINT("init_callback() Failed to invoke the callback. ERROR: %s", PyUnicode_AsUTF8(pystr));
 		}
 
         PyErr_Clear();

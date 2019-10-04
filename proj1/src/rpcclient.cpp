@@ -75,6 +75,7 @@ void rpc_client::send_message(const message &msg, message &response) {
 	}
 
 	close(sock_);
+	//shutdown(sock_, SHUT_RDWR);
 	sock_ = 0;
 
 	DEBUG_PRINT("rpc_client::send_message() [end]");
