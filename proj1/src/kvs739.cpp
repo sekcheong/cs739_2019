@@ -288,9 +288,9 @@ static int init_callback(char** server_list) {
 			PyObject *pystr;
 			PyErr_Fetch(&ptype, &pvalue, &ptraceback);
 			pystr = PyObject_Str(pvalue);
-			const char *str = PyUnicode_AsUTF8(pystr);
+			//const char *str = PyUnicode_AsUTF8(pystr);
 			// error_description = strdup(str);
-			DEBUG_PRINT("init_callback() Failed to invoke the callback. ERROR: %s", str);
+			DEBUG_PRINT("init_callback() Failed to invoke the callback. ERROR: %s", PyUnicode_AsUTF8(pystr));
 		}
 
         PyErr_Clear();
@@ -342,9 +342,9 @@ static int get_callback(char* key, char* value) {
 			PyObject *pystr;
 			PyErr_Fetch(&ptype, &pvalue, &ptraceback);
 			pystr = PyObject_Str(pvalue);
-			const char *str = PyUnicode_AsUTF8(pystr);
+			//const char *str = PyUnicode_AsUTF8(pystr);
 			// error_description = strdup(str);
-			DEBUG_PRINT("get_callback() Failed to invoke the callback. ERROR: %s", str);
+			DEBUG_PRINT("get_callback() Failed to invoke the callback. ERROR: %s", PyUnicode_AsUTF8(pystr));
 		}
 
         PyErr_Clear();
@@ -396,9 +396,9 @@ static int put_callback(char* key, char* value, char* old_value) {
 			PyObject *pystr;
 			PyErr_Fetch(&ptype, &pvalue, &ptraceback);
 			pystr = PyObject_Str(pvalue);
-			const char *str = PyUnicode_AsUTF8(pystr);
+			//const char *str = PyUnicode_AsUTF8(pystr);
 			// error_description = strdup(str);
-			DEBUG_PRINT("put_callback() Failed to invoke the callback. ERROR: %s", str);
+			DEBUG_PRINT("put_callback() Failed to invoke the callback. ERROR: %s", PyUnicode_AsUTF8(pystr));
 		}
 
         PyErr_Clear();
@@ -443,9 +443,9 @@ static int shutdown_callback() {
 			PyObject *pystr;
 			PyErr_Fetch(&ptype, &pvalue, &ptraceback);
 			pystr = PyObject_Str(pvalue);
-			const char *str = PyUnicode_AsUTF8(pystr);
+			//const char *str = PyUnicode_AsUTF8(pystr);
 			// error_description = strdup(str);
-			DEBUG_PRINT("shutdown_callback() Failed to invoke the callback. ERROR: %s", str);
+			DEBUG_PRINT("shutdown_callback() Failed to invoke the callback. ERROR: %s", PyUnicode_AsUTF8(pystr));
 		}
 
         PyErr_Clear();

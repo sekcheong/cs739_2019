@@ -215,6 +215,11 @@ void rpc_server::message_handler() {
 					}
 					break;
 			}
+			int dummy;
+			send(sockfd, (void *) &dummy, sizeof(int), 0);
+			//usleep(30);
+			shutdown(sockfd, SHUT_RDWR);
+			close(sockfd);
 		}
 
 	}
