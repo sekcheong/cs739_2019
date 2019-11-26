@@ -1,4 +1,4 @@
-# Project 2 Lightweight 
+# Project 2 Light weight paxos 
 
 CS737 Distributed Systems Fall 2019
 
